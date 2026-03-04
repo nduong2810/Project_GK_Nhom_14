@@ -43,18 +43,13 @@ public class FinanceService {
 
             Invoice invoice = new Invoice();
             invoice.setStudent(e.getStudent());
+            invoice.setEnrollment(e);
             invoice.setTotalAmount(courseFee);
             invoice.setIssueDate(LocalDate.now());
             invoice.setStatus(Invoice.Status.Issued);
             invoice.setNote(note);
 
             invoiceRepo.save(em, invoice);
-
-            // Tạo luôn một payment rỗng để liên kết invoice với enrollment
-            // (dùng enrollment_id trong bảng payments để biết hóa đơn này thuộc enrollment
-            // nào)
-            // Không tạo payment ở đây — payment sẽ được ghi nhận riêng khi học viên thanh
-            // toán.
             return null;
         });
     }
@@ -70,6 +65,7 @@ public class FinanceService {
 
             Invoice invoice = new Invoice();
             invoice.setStudent(e.getStudent());
+            invoice.setEnrollment(e);
             invoice.setTotalAmount(courseFee);
             invoice.setIssueDate(LocalDate.now());
             invoice.setStatus(Invoice.Status.Issued);

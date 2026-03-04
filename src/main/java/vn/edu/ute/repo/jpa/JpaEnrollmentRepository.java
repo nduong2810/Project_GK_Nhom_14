@@ -36,8 +36,11 @@ public class JpaEnrollmentRepository implements EnrollmentRepository {
 
     @Override
     public List<Enrollment> findEnrolledWithoutInvoice(EntityManager em) {
-        // Tìm enrollment status = Enrolled mà chưa có invoice nào (LEFT JOIN rồi lọc
-        // NULL)
+        // Loại enrollment nếu đã có invoice active (Issued/Paid/Draft) cho enrollment đó.
+        // Kiểm tra 2 cách để cover cả hóa đơn cũ (không có enrollment_id) và mới:
+        //   C1: inv.enrollment = e  (hóa đơn có enrollment_id trực tiếp)
+        //   C2: inv.student = e.student AND có payment liên kết enrollment này
+        //       (hóa đơn cũ tạo trước khi có cột enrollment_id)
         return em.createQuery(
                 "SELECT e FROM Enrollment e " +
                         "JOIN FETCH e.student " +
@@ -46,8 +49,14 @@ public class JpaEnrollmentRepository implements EnrollmentRepository {
                         "WHERE e.status = :status " +
                         "AND NOT EXISTS (" +
                         "  SELECT inv FROM Invoice inv " +
-                        "  JOIN Payment p ON p.invoice = inv " +
-                        "  WHERE p.enrollment = e AND inv.status <> :cancelled" +
+                        "  WHERE inv.status <> :cancelled " +
+                        "  AND (" +
+                        "    inv.enrollment = e " +
+                        "    OR (inv.student = e.student AND EXISTS (" +
+                        "          SELECT p FROM Payment p " +
+                        "          WHERE p.invoice = inv AND p.enrollment = e" +
+                        "        ))" +
+                        "  )" +
                         ")",
                 Enrollment.class)
                 .setParameter("status", Enrollment.Status.Enrolled)

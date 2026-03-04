@@ -32,6 +32,10 @@ public class Invoice {
     @JoinColumn(name = "student_id", nullable = false, foreignKey = @ForeignKey(name = "fk_invoices_student"))
     private Student student;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "enrollment_id", foreignKey = @ForeignKey(name = "fk_invoices_enrollment"))
+    private Enrollment enrollment;
+
     @Column(name = "total_amount", nullable = false, precision = 15, scale = 2, columnDefinition = "DECIMAL(15,2) NOT NULL DEFAULT 0.00")
     private BigDecimal totalAmount = BigDecimal.ZERO;
 
@@ -84,6 +88,14 @@ public class Invoice {
 
     public void setStudent(Student student) {
         this.student = student;
+    }
+
+    public Enrollment getEnrollment() {
+        return enrollment;
+    }
+
+    public void setEnrollment(Enrollment enrollment) {
+        this.enrollment = enrollment;
     }
 
     public BigDecimal getTotalAmount() {
