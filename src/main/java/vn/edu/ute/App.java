@@ -1,11 +1,10 @@
 package vn.edu.ute;
 
 import vn.edu.ute.db.TransactionManager;
-import vn.edu.ute.repo.CourseRepository;
-import vn.edu.ute.repo.RoomRepository;
-import vn.edu.ute.repo.jpa.JpaCourseRepository;
-import vn.edu.ute.repo.jpa.JpaRoomRepository;
+import vn.edu.ute.repo.*;
+import vn.edu.ute.repo.jpa.*;
 import vn.edu.ute.service.CourseService;
+import vn.edu.ute.service.FinanceService;
 import vn.edu.ute.service.RoomService;
 import vn.edu.ute.ui.MainFrame;
 import vn.edu.ute.ui.UI;
@@ -23,14 +22,18 @@ public class App {
         // 3. Khởi tạo các Repositories (Tầng truy xuất dữ liệu)
         RoomRepository roomRepo = new JpaRoomRepository();
         CourseRepository courseRepo = new JpaCourseRepository();
+        InvoiceRepository invoiceRepo = new JpaInvoiceRepository();
+        PaymentRepository paymentRepo = new JpaPaymentRepository();
+        EnrollmentRepository enrollmentRepo = new JpaEnrollmentRepository();
 
         // 4. Khởi tạo các Services và tiêm Repositories + TX vào (Tầng nghiệp vụ)
         RoomService roomService = new RoomService(roomRepo, tx);
         CourseService courseService = new CourseService(courseRepo, tx);
+        FinanceService financeService = new FinanceService(invoiceRepo, paymentRepo, enrollmentRepo, tx);
 
         // 5. Khởi chạy MainFrame trên luồng sự kiện của Swing
         SwingUtilities.invokeLater(() -> {
-            MainFrame f = new MainFrame(roomService, courseService);
+            MainFrame f = new MainFrame(roomService, courseService, financeService);
             f.setVisible(true);
         });
     }
