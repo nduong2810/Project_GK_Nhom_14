@@ -8,6 +8,26 @@
     <persistence-unit name="language-center-pu" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
 
+        <!-- Entity classes -->
+        <class>vn.edu.ute.model.Student</class>
+        <class>vn.edu.ute.model.Teacher</class>
+        <class>vn.edu.ute.model.Course</class>
+        <class>vn.edu.ute.model.Room</class>
+        <class>vn.edu.ute.model.Branch</class>
+        <class>vn.edu.ute.model.ClassEntity</class>
+        <class>vn.edu.ute.model.Enrollment</class>
+        <class>vn.edu.ute.model.Invoice</class>
+        <class>vn.edu.ute.model.Payment</class>
+        <class>vn.edu.ute.model.Schedule</class>
+        <class>vn.edu.ute.model.Attendance</class>
+        <class>vn.edu.ute.model.Staff</class>
+        <class>vn.edu.ute.model.UserAccount</class>
+        <class>vn.edu.ute.model.Result</class>
+        <class>vn.edu.ute.model.Promotion</class>
+        <class>vn.edu.ute.model.PlacementTest</class>
+        <class>vn.edu.ute.model.Certificate</class>
+        <class>vn.edu.ute.model.Notification</class>
+
         <properties>
             <!-- Database connection settings -->
             <property name="jakarta.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>

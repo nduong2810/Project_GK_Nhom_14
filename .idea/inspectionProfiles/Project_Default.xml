@@ -1,0 +1,10 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <!-- Disable JPA inspections that require a live DB connection to resolve -->
+    <inspection_tool class="JpaAttributeTypeInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="JpaDataSourceORMInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="SqlResolve" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="JpaQueryApiInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+  </profile>
+</component>
