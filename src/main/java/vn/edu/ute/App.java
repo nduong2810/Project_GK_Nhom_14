@@ -4,11 +4,6 @@ import vn.edu.ute.controller.LoginController;
 import vn.edu.ute.db.TransactionManager;
 import vn.edu.ute.repo.*;
 import vn.edu.ute.repo.jpa.*;
-import vn.edu.ute.service.AttendanceService;
-import vn.edu.ute.service.CourseService;
-import vn.edu.ute.service.FinanceService;
-import vn.edu.ute.service.RoomService;
-import vn.edu.ute.service.ScheduleService;
 import vn.edu.ute.service.*;
 import vn.edu.ute.ui.LoginView;
 import vn.edu.ute.ui.MainFrame;
@@ -31,6 +26,7 @@ public class App {
         PaymentRepository paymentRepo = new JpaPaymentRepository();
         EnrollmentRepository enrollmentRepo = new JpaEnrollmentRepository();
         UserAccountRepository userAccountRepo = new JpaUserAccountRepository();
+        StaffRepository staffRepo = new JpaStaffRepository(); // Re-added
         ScheduleRepository scheduleRepo = new JpaScheduleRepository();
         AttendanceRepository attendanceRepo = new JpaAttendanceRepository();
         TeacherRepository teacherRepo = new JpaTeacherRepository();
@@ -40,16 +36,18 @@ public class App {
         RoomService roomService = new RoomService(roomRepo, tx);
         CourseService courseService = new CourseService(courseRepo, tx);
         FinanceService financeService = new FinanceService(invoiceRepo, paymentRepo, enrollmentRepo, tx);
+        StaffService staffService = new StaffService(staffRepo, tx); // Re-added
         ScheduleService scheduleService = new ScheduleService(scheduleRepo, tx);
         AttendanceService attendanceService = new AttendanceService(attendanceRepo, tx);
         TeacherService teacherService = new TeacherService(teacherRepo, tx);
         ClassService classService = new ClassService(classRepo, tx);
+        UserAccountService userAccountService = new UserAccountService(userAccountRepo, tx); // Assuming this was also lost
 
         // 5. Khởi chạy MainFrame trên luồng sự kiện của Swing
         SwingUtilities.invokeLater(() -> {
             LoginView loginView = new LoginView();
             MainFrame mainFrame = new MainFrame(roomService, courseService, classService, teacherService,
-                    financeService, scheduleService, attendanceService, loginView);
+                    financeService, scheduleService, attendanceService, staffService, userAccountService, loginView); // Updated constructor
             new LoginController(loginView, userAccountRepo, mainFrame);
             loginView.setVisible(true);
         });
