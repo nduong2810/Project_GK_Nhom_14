@@ -2,11 +2,14 @@ package vn.edu.ute.ui;
 
 import vn.edu.ute.model.UserAccount;
 import vn.edu.ute.service.AttendanceService;
+import vn.edu.ute.service.ClassService;
 import vn.edu.ute.service.CourseService;
 import vn.edu.ute.service.FinanceService;
 import vn.edu.ute.service.RoomService;
 import vn.edu.ute.service.ScheduleService;
 import vn.edu.ute.ui.attendance.AttendancePanel;
+import vn.edu.ute.service.TeacherService;
+import vn.edu.ute.ui.classmgmt.ClassPanel;
 import vn.edu.ute.ui.course.CoursePanel;
 import vn.edu.ute.ui.finance.FinancePanel;
 import vn.edu.ute.ui.room.RoomPanel;
@@ -24,6 +27,8 @@ public class MainFrame extends JFrame {
     private FinanceService financeService;
     private ScheduleService scheduleService;
     private AttendanceService attendanceService;
+    private ClassService classService;
+    private TeacherService teacherService;
     private LoginView loginView;
 
     private UserAccount currentUser; // Lưu user hiện tại để lấy ID khi tạo tab lịch
@@ -31,11 +36,14 @@ public class MainFrame extends JFrame {
     private JButton logoutButton;
 
     public MainFrame(RoomService roomService, CourseService courseService,
-            FinanceService financeService, ScheduleService scheduleService,
-            AttendanceService attendanceService, LoginView loginView) {
+                     ClassService classService, TeacherService teacherService,
+                     FinanceService financeService, ScheduleService scheduleService,
+                     AttendanceService attendanceService, LoginView loginView) {
         super("Hệ Thống Quản Lý Trung Tâm Ngoại Ngữ");
         this.roomService = roomService;
         this.courseService = courseService;
+        this.classService = classService;
+        this.teacherService = teacherService;
         this.financeService = financeService;
         this.scheduleService = scheduleService;
         this.attendanceService = attendanceService;
@@ -98,6 +106,9 @@ public class MainFrame extends JFrame {
 
             CoursePanel coursePanel = new CoursePanel(courseService);
             tabbedPane.addTab("Quản lý Khóa học", new ImageIcon(), coursePanel, "Thêm/Sửa/Xóa Khóa học");
+
+            ClassPanel classPanel = new ClassPanel(classService, courseService, teacherService, roomService);
+            tabbedPane.addTab("Quản lý Lớp học", new ImageIcon(), classPanel, "Mở/Sửa/Xóa Lớp học");
 
             FinancePanel financePanel = new FinancePanel(financeService);
             tabbedPane.addTab("Quản lý Tài chính", new ImageIcon(), financePanel, "Hóa đơn / Thanh toán học phí");

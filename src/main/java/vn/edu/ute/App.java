@@ -9,6 +9,7 @@ import vn.edu.ute.service.CourseService;
 import vn.edu.ute.service.FinanceService;
 import vn.edu.ute.service.RoomService;
 import vn.edu.ute.service.ScheduleService;
+import vn.edu.ute.service.*;
 import vn.edu.ute.ui.LoginView;
 import vn.edu.ute.ui.MainFrame;
 import vn.edu.ute.ui.UI;
@@ -32,6 +33,8 @@ public class App {
         UserAccountRepository userAccountRepo = new JpaUserAccountRepository();
         ScheduleRepository scheduleRepo = new JpaScheduleRepository();
         AttendanceRepository attendanceRepo = new JpaAttendanceRepository();
+        TeacherRepository teacherRepo = new JpaTeacherRepository();
+        ClassRepository classRepo = new JpaClassRepository();
 
         // 4. Khởi tạo các Services và tiêm Repositories + TX vào (Tầng nghiệp vụ)
         RoomService roomService = new RoomService(roomRepo, tx);
@@ -39,12 +42,14 @@ public class App {
         FinanceService financeService = new FinanceService(invoiceRepo, paymentRepo, enrollmentRepo, tx);
         ScheduleService scheduleService = new ScheduleService(scheduleRepo, tx);
         AttendanceService attendanceService = new AttendanceService(attendanceRepo, tx);
+        TeacherService teacherService = new TeacherService(teacherRepo, tx);
+        ClassService classService = new ClassService(classRepo, tx);
 
         // 5. Khởi chạy MainFrame trên luồng sự kiện của Swing
         SwingUtilities.invokeLater(() -> {
             LoginView loginView = new LoginView();
-            MainFrame mainFrame = new MainFrame(roomService, courseService, financeService, scheduleService,
-                    attendanceService, loginView);
+            MainFrame mainFrame = new MainFrame(roomService, courseService, classService, teacherService,
+                    financeService, scheduleService, attendanceService, loginView);
             new LoginController(loginView, userAccountRepo, mainFrame);
             loginView.setVisible(true);
         });
