@@ -84,7 +84,7 @@ public class StaffPanel extends JPanel {
     private void openStaffDialog(Staff staff) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Thông tin Nhân viên", true);
         dialog.setLayout(new GridLayout(0, 2, 10, 10));
-        dialog.setSize(400, 300);
+        dialog.setSize(450, 250);
 
         JTextField fullNameField = new JTextField(staff != null ? staff.getFullName() : "");
         JComboBox<Staff.Role> roleComboBox = new JComboBox<>(Staff.Role.values());

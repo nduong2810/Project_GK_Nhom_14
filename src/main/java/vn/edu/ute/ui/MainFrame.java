@@ -20,6 +20,7 @@ public class MainFrame extends JFrame {
     private CourseService courseService;
     private ClassService classService;
     private TeacherService teacherService;
+    private StudentService studentService;
     private FinanceService financeService;
     private ScheduleService scheduleService;
     private AttendanceService attendanceService;
@@ -31,7 +32,7 @@ public class MainFrame extends JFrame {
     private JLabel userInfoLabel;
     private JButton logoutButton;
 
-    public MainFrame(RoomService roomService, CourseService courseService, ClassService classService, TeacherService teacherService,
+    public MainFrame(RoomService roomService, CourseService courseService, ClassService classService, TeacherService teacherService, StudentService studentService,
                      FinanceService financeService, ScheduleService scheduleService, AttendanceService attendanceService,
                      StaffService staffService, UserAccountService userAccountService, LoginView loginView) {
         super("Hệ Thống Quản Lý Trung Tâm Ngoại Ngữ");
@@ -39,6 +40,7 @@ public class MainFrame extends JFrame {
         this.courseService = courseService;
         this.classService = classService;
         this.teacherService = teacherService;
+        this.studentService = studentService;
         this.financeService = financeService;
         this.scheduleService = scheduleService;
         this.attendanceService = attendanceService;
@@ -105,6 +107,12 @@ public class MainFrame extends JFrame {
         }
 
         if ("Staff".equalsIgnoreCase(role) || "Admin".equalsIgnoreCase(role)) {
+            StudentPanel studentPanel = new StudentPanel(studentService);
+            tabbedPane.addTab("Quản lý Học viên", new ImageIcon(), studentPanel, "Thêm/Sửa/Xóa Học viên");
+
+            TeacherPanel teacherPanel = new TeacherPanel(teacherService);
+            tabbedPane.addTab("Quản lý Giáo viên", new ImageIcon(), teacherPanel, "Thêm/Sửa/Xóa Giáo viên");
+
             RoomPanel roomPanel = new RoomPanel(roomService);
             tabbedPane.addTab("Quản lý Phòng học", new ImageIcon(), roomPanel, "Thêm/Sửa/Xóa Phòng học");
 

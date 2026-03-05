@@ -82,7 +82,7 @@ public class UserAccountPanel extends JPanel {
     private void openUserAccountDialog(UserAccount userAccount) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Thông tin Tài khoản", true);
         dialog.setLayout(new GridLayout(0, 2, 10, 10));
-        dialog.setSize(400, 200);
+        dialog.setSize(450, 200);
 
         JTextField usernameField = new JTextField(userAccount != null ? userAccount.getUsername() : "");
         JPasswordField passwordField = new JPasswordField();
