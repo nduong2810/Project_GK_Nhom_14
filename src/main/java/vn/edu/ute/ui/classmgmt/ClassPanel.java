@@ -7,7 +7,11 @@ import vn.edu.ute.service.RoomService;
 import vn.edu.ute.service.TeacherService;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 
 public class ClassPanel extends JPanel {
     private final ClassService classService;
@@ -17,6 +21,7 @@ public class ClassPanel extends JPanel {
 
     private final ClassTableModel tableModel = new ClassTableModel();
     private final JTable table = new JTable(tableModel);
+    private final JTextField txtSearch = createPlaceholderField("Nhập tên lớp, khóa học, giáo viên...", 25);
 
     public ClassPanel(ClassService classService, CourseService courseService, TeacherService teacherService, RoomService roomService) {
         this.classService = classService;
@@ -31,7 +36,9 @@ public class ClassPanel extends JPanel {
     }
 
     private void buildUI() {
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel topToolbar = new JPanel(new BorderLayout());
+
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JButton btnAdd = new JButton("Mở Lớp Mới");
         JButton btnEdit = new JButton("Sửa Lớp");
         JButton btnDelete = new JButton("Xóa");
@@ -42,9 +49,26 @@ public class ClassPanel extends JPanel {
         btnDelete.addActionListener(e -> onDelete());
         btnRefresh.addActionListener(e -> loadData());
 
-        topPanel.add(btnAdd); topPanel.add(btnEdit); topPanel.add(btnDelete); topPanel.add(btnRefresh);
+        btnPanel.add(btnAdd);
+        btnPanel.add(btnEdit);
+        btnPanel.add(btnDelete);
+        btnPanel.add(btnRefresh);
+
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        searchPanel.add(new JLabel("🔍 Tìm kiếm:"));
+        searchPanel.add(txtSearch);
+
+        txtSearch.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { tableModel.setFilter(txtSearch.getText()); }
+            public void removeUpdate(DocumentEvent e) { tableModel.setFilter(txtSearch.getText()); }
+            public void changedUpdate(DocumentEvent e) { tableModel.setFilter(txtSearch.getText()); }
+        });
+
+        topToolbar.add(btnPanel, BorderLayout.WEST);
+        topToolbar.add(searchPanel, BorderLayout.EAST);
+
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        add(topPanel, BorderLayout.NORTH);
+        add(topToolbar, BorderLayout.NORTH);
         add(new JScrollPane(table), BorderLayout.CENTER);
     }
 
@@ -55,7 +79,6 @@ public class ClassPanel extends JPanel {
 
     private void onAdd() {
         try {
-            // Lấy danh sách đang hoạt động để đưa lên Form
             ClassFormDialog dlg = new ClassFormDialog((Frame) SwingUtilities.getWindowAncestor(this), "Mở Lớp Mới", null,
                     courseService.getActiveCourses(), teacherService.getActiveTeachers(), roomService.getActiveRooms());
             dlg.setVisible(true);
@@ -95,5 +118,27 @@ public class ClassPanel extends JPanel {
             try { classService.deleteClass(c.getClassId()); loadData(); }
             catch (Exception ex) { JOptionPane.showMessageDialog(this, "Lỗi xóa: " + ex.getMessage()); }
         }
+    }
+
+    private JTextField createPlaceholderField(String placeholder, int columns) {
+        JTextField field = new JTextField(columns) {
+            @Override protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (getText().isEmpty() && !isFocusOwner()) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setColor(Color.GRAY);
+                    g2.setFont(getFont().deriveFont(Font.ITALIC));
+                    Insets ins = getInsets();
+                    g2.drawString(placeholder, ins.left + 2, getHeight() - ins.bottom - 4);
+                    g2.dispose();
+                }
+            }
+        };
+        field.addFocusListener(new FocusAdapter() {
+            @Override public void focusGained(FocusEvent e) { field.repaint(); }
+            @Override public void focusLost(FocusEvent e) { field.repaint(); }
+        });
+        return field;
     }
 }
