@@ -44,17 +44,20 @@ public class FinancePanel extends JPanel {
         JButton btnCreateInvoice = new JButton("Tạo Hóa Đơn");
         JButton btnRecordPayment = new JButton("Thanh Toán");
         JButton btnCancelInvoice = new JButton("Hủy Hóa Đơn");
+        JButton btnRefund = new JButton("Hoàn Tiền");
         JButton btnRefresh = new JButton("Làm Mới");
 
         // Gắn sự kiện bằng lambda
         btnCreateInvoice.addActionListener(e -> onCreateInvoice());
         btnRecordPayment.addActionListener(e -> onRecordPayment());
         btnCancelInvoice.addActionListener(e -> onCancelInvoice());
+        btnRefund.addActionListener(e -> onRefundInvoice());
         btnRefresh.addActionListener(e -> loadInvoices());
 
         btnPanel.add(btnCreateInvoice);
         btnPanel.add(btnRecordPayment);
         btnPanel.add(btnCancelInvoice);
+        btnPanel.add(btnRefund);
         btnPanel.add(btnRefresh);
 
         // Bên phải: ô tìm kiếm
@@ -216,6 +219,39 @@ public class FinancePanel extends JPanel {
         }
     }
 
+    private void onRefundInvoice() {
+        int selectedRow = invoiceTable.getSelectedRow();
+        if (selectedRow < 0) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một hóa đơn trong bảng để hoàn tiền.");
+            return;
+        }
+
+        Invoice selectedInvoice = invoiceTableModel.getAt(selectedRow);
+        if (selectedInvoice.getStatus() == Invoice.Status.Cancelled) {
+            JOptionPane.showMessageDialog(this, "Hóa đơn này đã bị hủy.",
+                    "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Xác nhận hoàn tiền với thông báo quy định 70%
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Theo quy định, chỉ hoàn lại 70% số tiền đã thanh toán.\n"
+                        + "Bạn có muốn tiến hành hoàn tiền cho hóa đơn #" + selectedInvoice.getInvoiceId() + "?",
+                "Xác nhận hoàn tiền", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                java.math.BigDecimal refundAmount = financeService.refundInvoice(selectedInvoice.getInvoiceId());
+                JOptionPane.showMessageDialog(this,
+                        String.format("Hoàn tiền thành công!\nSố tiền hoàn: %,.0f đ (70%%)", refundAmount),
+                        "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                loadInvoices();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
     // ==================== HELPER ====================
 
     /**
@@ -240,9 +276,14 @@ public class FinancePanel extends JPanel {
         // Repaint khi focus thay đổi để ẩn/hiện placeholder
         field.addFocusListener(new FocusAdapter() {
             @Override
-            public void focusGained(FocusEvent e) { field.repaint(); }
+            public void focusGained(FocusEvent e) {
+                field.repaint();
+            }
+
             @Override
-            public void focusLost(FocusEvent e)   { field.repaint(); }
+            public void focusLost(FocusEvent e) {
+                field.repaint();
+            }
         });
         return field;
     }
