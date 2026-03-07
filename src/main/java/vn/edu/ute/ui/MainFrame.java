@@ -6,6 +6,8 @@ import vn.edu.ute.ui.attendance.AttendancePanel;
 import vn.edu.ute.ui.classmgmt.ClassPanel;
 import vn.edu.ute.ui.course.CoursePanel;
 import vn.edu.ute.ui.finance.FinancePanel;
+import vn.edu.ute.ui.result.GradeEntryPanel;
+import vn.edu.ute.ui.result.StudentGradePanel;
 import vn.edu.ute.ui.room.RoomPanel;
 import vn.edu.ute.ui.schedule.CenterSchedulePanel;
 import vn.edu.ute.ui.schedule.StudentSchedulePanel;
@@ -25,6 +27,7 @@ public class MainFrame extends JFrame {
     private ScheduleService scheduleService;
     private AttendanceService attendanceService;
     private StaffService staffService;
+    private ResultService resultService;
     private UserAccountService userAccountService;
     private LoginView loginView;
 
@@ -32,9 +35,11 @@ public class MainFrame extends JFrame {
     private JLabel userInfoLabel;
     private JButton logoutButton;
 
-    public MainFrame(RoomService roomService, CourseService courseService, ClassService classService, TeacherService teacherService, StudentService studentService,
-                     FinanceService financeService, ScheduleService scheduleService, AttendanceService attendanceService,
-                     StaffService staffService, UserAccountService userAccountService, LoginView loginView) {
+    public MainFrame(RoomService roomService, CourseService courseService, ClassService classService,
+            TeacherService teacherService, StudentService studentService,
+            FinanceService financeService, ScheduleService scheduleService, AttendanceService attendanceService,
+            StaffService staffService, UserAccountService userAccountService, ResultService resultService,
+            LoginView loginView) {
         super("Hệ Thống Quản Lý Trung Tâm Ngoại Ngữ");
         this.roomService = roomService;
         this.courseService = courseService;
@@ -46,6 +51,7 @@ public class MainFrame extends JFrame {
         this.attendanceService = attendanceService;
         this.staffService = staffService;
         this.userAccountService = userAccountService;
+        this.resultService = resultService;
         this.loginView = loginView;
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -101,7 +107,7 @@ public class MainFrame extends JFrame {
         if ("Admin".equalsIgnoreCase(role)) {
             StaffPanel staffPanel = new StaffPanel(staffService);
             tabbedPane.addTab("Quản lý Nhân viên", new ImageIcon(), staffPanel, "Thêm/Sửa/Xóa Nhân viên");
-            
+
             UserAccountPanel userAccountPanel = new UserAccountPanel(userAccountService);
             tabbedPane.addTab("Quản lý Tài khoản", new ImageIcon(), userAccountPanel, "Thêm/Sửa/Xóa Tài khoản");
         }
@@ -118,7 +124,7 @@ public class MainFrame extends JFrame {
 
             CoursePanel coursePanel = new CoursePanel(courseService);
             tabbedPane.addTab("Quản lý Khóa học", new ImageIcon(), coursePanel, "Thêm/Sửa/Xóa Khóa học");
-            
+
             ClassPanel classPanel = new ClassPanel(classService, courseService, teacherService, roomService);
             tabbedPane.addTab("Quản lý Lớp học", new ImageIcon(), classPanel, "Mở/Sửa/Xóa Lớp học");
 
@@ -126,7 +132,8 @@ public class MainFrame extends JFrame {
             tabbedPane.addTab("Quản lý Tài chính", new ImageIcon(), financePanel, "Hóa đơn / Thanh toán học phí");
 
             CenterSchedulePanel schedulePanel = new CenterSchedulePanel(scheduleService);
-            tabbedPane.addTab("Lịch hoạt động", new ImageIcon(), schedulePanel, "Xem lịch hoạt động chung của trung tâm");
+            tabbedPane.addTab("Lịch hoạt động", new ImageIcon(), schedulePanel,
+                    "Xem lịch hoạt động chung của trung tâm");
 
         } else if ("Teacher".equalsIgnoreCase(role)) {
             CoursePanel coursePanel = new CoursePanel(courseService);
@@ -136,15 +143,23 @@ public class MainFrame extends JFrame {
                 Long tid = currentUser.getTeacher().getTeacherId();
                 TeacherSchedulePanel teacherSchedulePanel = new TeacherSchedulePanel(scheduleService, tid);
                 tabbedPane.addTab("Lịch dạy", new ImageIcon(), teacherSchedulePanel, "Xem lịch dạy của bạn");
-                
+
                 AttendancePanel attendancePanel = new AttendancePanel(attendanceService, tid);
                 tabbedPane.addTab("Điểm danh", new ImageIcon(), attendancePanel, "Điểm danh học viên cho lớp bạn dạy");
+
+                GradeEntryPanel gradeEntryPanel = new GradeEntryPanel(resultService, tid);
+                tabbedPane.addTab("Nhập điểm", new ImageIcon(), gradeEntryPanel,
+                        "Nhập điểm cho học viên các lớp bạn dạy");
             }
 
         } else if ("Student".equalsIgnoreCase(role)) {
             if (currentUser != null && currentUser.getStudent() != null) {
-                StudentSchedulePanel studentSchedulePanel = new StudentSchedulePanel(scheduleService, currentUser.getStudent().getStudentId());
+                Long sid = currentUser.getStudent().getStudentId();
+                StudentSchedulePanel studentSchedulePanel = new StudentSchedulePanel(scheduleService, sid);
                 tabbedPane.addTab("Lịch học", new ImageIcon(), studentSchedulePanel, "Xem lịch học của bạn");
+
+                StudentGradePanel studentGradePanel = new StudentGradePanel(resultService, sid);
+                tabbedPane.addTab("Xem điểm", new ImageIcon(), studentGradePanel, "Xem kết quả học tập của bạn");
             }
         }
 
