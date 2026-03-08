@@ -17,4 +17,7 @@ public interface EnrollmentRepository {
      * Dùng để hiển thị danh sách enrollment chờ tạo hóa đơn.
      */
     List<Enrollment> findEnrolledWithoutInvoice(EntityManager em) throws Exception;
+    void save(EntityManager em, Enrollment enrollment) throws Exception;
+    void update(EntityManager em, Enrollment enrollment) throws Exception;
+    void delete(EntityManager em, Long id) throws Exception;
 }

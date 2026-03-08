@@ -11,4 +11,5 @@ public interface StudentRepository {
     List<Student> findByNameContaining(EntityManager em, String name);
     Student save(EntityManager em, Student student);
     void deleteById(EntityManager em, Long id);
+    List<Student> findActiveStudents(EntityManager em) throws Exception;
 }

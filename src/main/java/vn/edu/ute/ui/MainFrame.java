@@ -12,6 +12,7 @@ import vn.edu.ute.ui.room.RoomPanel;
 import vn.edu.ute.ui.schedule.CenterSchedulePanel;
 import vn.edu.ute.ui.schedule.StudentSchedulePanel;
 import vn.edu.ute.ui.schedule.TeacherSchedulePanel;
+import vn.edu.ute.ui.enrollment.EnrollmentPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,6 +24,7 @@ public class MainFrame extends JFrame {
     private ClassService classService;
     private TeacherService teacherService;
     private StudentService studentService;
+    private EnrollmentService enrollmentService;
     private FinanceService financeService;
     private ScheduleService scheduleService;
     private AttendanceService attendanceService;
@@ -36,16 +38,17 @@ public class MainFrame extends JFrame {
     private JButton logoutButton;
 
     public MainFrame(RoomService roomService, CourseService courseService, ClassService classService,
-            TeacherService teacherService, StudentService studentService,
-            FinanceService financeService, ScheduleService scheduleService, AttendanceService attendanceService,
-            StaffService staffService, UserAccountService userAccountService, ResultService resultService,
-            LoginView loginView) {
+                     TeacherService teacherService, StudentService studentService, EnrollmentService enrollmentService,
+                     FinanceService financeService, ScheduleService scheduleService, AttendanceService attendanceService,
+                     StaffService staffService, UserAccountService userAccountService, ResultService resultService,
+                     LoginView loginView) {
         super("Hệ Thống Quản Lý Trung Tâm Ngoại Ngữ");
         this.roomService = roomService;
         this.courseService = courseService;
         this.classService = classService;
         this.teacherService = teacherService;
         this.studentService = studentService;
+        this.enrollmentService = enrollmentService;
         this.financeService = financeService;
         this.scheduleService = scheduleService;
         this.attendanceService = attendanceService;
@@ -127,6 +130,9 @@ public class MainFrame extends JFrame {
 
             ClassPanel classPanel = new ClassPanel(classService, courseService, teacherService, roomService);
             tabbedPane.addTab("Quản lý Lớp học", new ImageIcon(), classPanel, "Mở/Sửa/Xóa Lớp học");
+
+            EnrollmentPanel enrollmentPanel = new EnrollmentPanel(enrollmentService, studentService, classService);
+            tabbedPane.addTab("Ghi Danh Học Viên", new ImageIcon(), enrollmentPanel, "Ghi danh học viên vào lớp học");
 
             FinancePanel financePanel = new FinancePanel(financeService);
             tabbedPane.addTab("Quản lý Tài chính", new ImageIcon(), financePanel, "Hóa đơn / Thanh toán học phí");

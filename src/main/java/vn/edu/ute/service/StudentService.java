@@ -57,4 +57,8 @@ public class StudentService {
             throw new RuntimeException(e);
         }
     }
+
+    public List<Student> getActiveStudents() throws Exception {
+        return transactionManager.runInTransaction(em -> studentRepository.findActiveStudents(em));
+    }
 }

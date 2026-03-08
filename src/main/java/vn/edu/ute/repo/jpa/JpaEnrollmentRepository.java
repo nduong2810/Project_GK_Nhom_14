@@ -63,4 +63,21 @@ public class JpaEnrollmentRepository implements EnrollmentRepository {
                 .setParameter("cancelled", vn.edu.ute.model.Invoice.Status.Cancelled)
                 .getResultList();
     }
+    @Override
+    public void save(EntityManager em, Enrollment enrollment) {
+        em.persist(enrollment);
+    }
+
+    @Override
+    public void update(EntityManager em, Enrollment enrollment) {
+        em.merge(enrollment);
+    }
+
+    @Override
+    public void delete(EntityManager em, Long id) {
+        Enrollment e = em.find(Enrollment.class, id);
+        if (e != null) {
+            em.remove(e);
+        }
+    }
 }

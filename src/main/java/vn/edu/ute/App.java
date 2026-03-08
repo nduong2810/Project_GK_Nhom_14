@@ -47,12 +47,13 @@ public class App {
         ClassService classService = new ClassService(classRepo, tx);
         UserAccountService userAccountService = new UserAccountService(userAccountRepo, tx);
         ResultService resultService = new ResultService(resultRepo, tx);
+        EnrollmentService enrollmentService = new EnrollmentService(enrollmentRepo, tx);
 
         // 5. Khởi chạy MainFrame trên luồng sự kiện của Swing
         SwingUtilities.invokeLater(() -> {
             LoginView loginView = new LoginView();
             MainFrame mainFrame = new MainFrame(roomService, courseService, classService, teacherService,
-                    studentService,
+                    studentService, enrollmentService,
                     financeService, scheduleService, attendanceService, staffService, userAccountService, resultService,
                     loginView);
             new LoginController(loginView, userAccountRepo, mainFrame);

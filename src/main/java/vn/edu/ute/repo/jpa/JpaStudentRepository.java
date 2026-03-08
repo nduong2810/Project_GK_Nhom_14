@@ -38,4 +38,11 @@ public class JpaStudentRepository implements StudentRepository {
     public void deleteById(EntityManager em, Long id) {
         findById(em, id).ifPresent(em::remove);
     }
+
+    @Override
+    public List<Student> findActiveStudents(EntityManager em) {
+        return em.createQuery("SELECT s FROM Student s WHERE s.status = :status ORDER BY s.fullName", Student.class)
+                .setParameter("status", Student.Status.Active)
+                .getResultList();
+    }
 }
