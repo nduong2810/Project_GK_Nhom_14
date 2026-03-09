@@ -20,30 +20,32 @@ public class StudentPanel extends JPanel {
     public StudentPanel(StudentService studentService) {
         this.studentService = studentService;
         setLayout(new BorderLayout());
+        UITheme.applyPanelStyle(this);
         initializeUI();
         loadStudentData();
     }
 
     private void initializeUI() {
-        // Buttons Panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JButton addButton = new JButton("Thêm");
-        JButton editButton = new JButton("Sửa");
-        JButton deleteButton = new JButton("Xóa");
-        JButton refreshButton = new JButton("Làm mới");
-        buttonPanel.add(addButton);
-        buttonPanel.add(editButton);
-        buttonPanel.add(deleteButton);
-        buttonPanel.add(refreshButton);
-        add(buttonPanel, BorderLayout.NORTH);
+        // ===== Toolbar =====
+        JPanel toolbar = UITheme.createToolbar();
+        JButton addButton = UITheme.createSuccessButton("Thêm", "➕");
+        JButton editButton = UITheme.createPrimaryButton("Sửa", "✏️");
+        JButton deleteButton = UITheme.createDangerButton("Xóa", "🗑");
+        JButton refreshButton = UITheme.createNeutralButton("Làm mới", "🔄");
+        toolbar.add(addButton);
+        toolbar.add(editButton);
+        toolbar.add(deleteButton);
+        toolbar.add(refreshButton);
+        add(toolbar, BorderLayout.NORTH);
 
-        // Table
-        String[] columnNames = {"ID", "Họ và Tên", "Ngày sinh", "Giới tính", "Điện thoại", "Email", "Địa chỉ", "Trạng thái"};
+        // ===== Table =====
+        String[] columnNames = { "ID", "Họ và Tên", "Ngày sinh", "Giới tính", "Điện thoại", "Email", "Địa chỉ",
+                "Trạng thái" };
         tableModel = new DefaultTableModel(columnNames, 0);
         studentTable = new JTable(tableModel);
-        add(new JScrollPane(studentTable), BorderLayout.CENTER);
+        add(UITheme.createStyledScrollPane(studentTable), BorderLayout.CENTER);
 
-        // Button Actions
+        // ===== Actions =====
         addButton.addActionListener(e -> openStudentDialog(null));
         editButton.addActionListener(e -> {
             int selectedRow = studentTable.getSelectedRow();
@@ -51,20 +53,23 @@ public class StudentPanel extends JPanel {
                 Long studentId = (Long) tableModel.getValueAt(selectedRow, 0);
                 studentService.findStudentById(studentId).ifPresent(this::openStudentDialog);
             } else {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn một học viên để sửa.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn một học viên để sửa.", "Thông báo",
+                        JOptionPane.WARNING_MESSAGE);
             }
         });
         deleteButton.addActionListener(e -> {
             int selectedRow = studentTable.getSelectedRow();
             if (selectedRow >= 0) {
-                int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa học viên này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+                int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa học viên này?", "Xác nhận",
+                        JOptionPane.YES_NO_OPTION);
                 if (confirm == JOptionPane.YES_OPTION) {
                     Long studentId = (Long) tableModel.getValueAt(selectedRow, 0);
                     studentService.deleteStudent(studentId);
                     loadStudentData();
                 }
             } else {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn một học viên để xóa.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn một học viên để xóa.", "Thông báo",
+                        JOptionPane.WARNING_MESSAGE);
             }
         });
         refreshButton.addActionListener(e -> loadStudentData());
@@ -74,7 +79,7 @@ public class StudentPanel extends JPanel {
         tableModel.setRowCount(0);
         List<Student> studentList = studentService.getAllStudents();
         for (Student student : studentList) {
-            tableModel.addRow(new Object[]{
+            tableModel.addRow(new Object[] {
                     student.getStudentId(),
                     student.getFullName(),
                     student.getDateOfBirth(),
@@ -89,42 +94,89 @@ public class StudentPanel extends JPanel {
 
     private void openStudentDialog(Student student) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Thông tin Học viên", true);
-        dialog.setLayout(new GridLayout(0, 2, 10, 10));
-        
-        JTextField fullNameField = new JTextField(student != null ? student.getFullName() : "");
+        dialog.getContentPane().setLayout(new BorderLayout());
+        UITheme.styleDialog(dialog);
+
+        JPanel form = new JPanel(new GridBagLayout());
+        form.setOpaque(false);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(6, 8, 6, 8);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        JTextField fullNameField = new JTextField(student != null ? student.getFullName() : "", 22);
         JDateChooser dateOfBirthChooser = new JDateChooser();
         if (student != null && student.getDateOfBirth() != null) {
-            dateOfBirthChooser.setDate(Date.from(student.getDateOfBirth().atStartOfDay(ZoneId.systemDefault()).toInstant()));
+            dateOfBirthChooser
+                    .setDate(Date.from(student.getDateOfBirth().atStartOfDay(ZoneId.systemDefault()).toInstant()));
         }
         JComboBox<Student.Gender> genderComboBox = new JComboBox<>(Student.Gender.values());
-        if (student != null) genderComboBox.setSelectedItem(student.getGender());
-        JTextField phoneField = new JTextField(student != null ? student.getPhone() : "");
-        JTextField emailField = new JTextField(student != null ? student.getEmail() : "");
-        JTextField addressField = new JTextField(student != null ? student.getAddress() : "");
+        if (student != null)
+            genderComboBox.setSelectedItem(student.getGender());
+        JTextField phoneField = new JTextField(student != null ? student.getPhone() : "", 22);
+        JTextField emailField = new JTextField(student != null ? student.getEmail() : "", 22);
+        JTextField addressField = new JTextField(student != null ? student.getAddress() : "", 22);
         JComboBox<Student.Status> statusComboBox = new JComboBox<>(Student.Status.values());
-        if (student != null) statusComboBox.setSelectedItem(student.getStatus());
+        if (student != null)
+            statusComboBox.setSelectedItem(student.getStatus());
 
-        dialog.add(new JLabel("Họ và Tên:"));
-        dialog.add(fullNameField);
-        dialog.add(new JLabel("Ngày sinh:"));
-        dialog.add(dateOfBirthChooser);
-        dialog.add(new JLabel("Giới tính:"));
-        dialog.add(genderComboBox);
-        dialog.add(new JLabel("Điện thoại:"));
-        dialog.add(phoneField);
-        dialog.add(new JLabel("Email:"));
-        dialog.add(emailField);
-        dialog.add(new JLabel("Địa chỉ:"));
-        dialog.add(addressField);
-        dialog.add(new JLabel("Trạng thái:"));
-        dialog.add(statusComboBox);
+        int row = 0;
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        form.add(UITheme.createFormLabel("Họ và Tên:"), gbc);
+        gbc.gridx = 1;
+        form.add(fullNameField, gbc);
+        row++;
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        form.add(UITheme.createFormLabel("Ngày sinh:"), gbc);
+        gbc.gridx = 1;
+        form.add(dateOfBirthChooser, gbc);
+        row++;
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        form.add(UITheme.createFormLabel("Giới tính:"), gbc);
+        gbc.gridx = 1;
+        form.add(genderComboBox, gbc);
+        row++;
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        form.add(UITheme.createFormLabel("Điện thoại:"), gbc);
+        gbc.gridx = 1;
+        form.add(phoneField, gbc);
+        row++;
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        form.add(UITheme.createFormLabel("Email:"), gbc);
+        gbc.gridx = 1;
+        form.add(emailField, gbc);
+        row++;
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        form.add(UITheme.createFormLabel("Địa chỉ:"), gbc);
+        gbc.gridx = 1;
+        form.add(addressField, gbc);
+        row++;
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        form.add(UITheme.createFormLabel("Trạng thái:"), gbc);
+        gbc.gridx = 1;
+        form.add(statusComboBox, gbc);
 
-        JButton saveButton = new JButton("Lưu");
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        actions.setOpaque(false);
+        actions.setBorder(BorderFactory.createEmptyBorder(12, 0, 0, 0));
+        JButton saveButton = UITheme.createPrimaryButton("Lưu", "💾");
+        JButton cancelButton = UITheme.createOutlineButton("Hủy");
+        actions.add(saveButton);
+        actions.add(cancelButton);
+
         saveButton.addActionListener(e -> {
             Student newStudent = (student != null) ? student : new Student();
             newStudent.setFullName(fullNameField.getText());
             if (dateOfBirthChooser.getDate() != null) {
-                newStudent.setDateOfBirth(dateOfBirthChooser.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+                newStudent.setDateOfBirth(
+                        dateOfBirthChooser.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
             }
             newStudent.setGender((Student.Gender) genderComboBox.getSelectedItem());
             newStudent.setPhone(phoneField.getText());
@@ -139,11 +191,11 @@ public class StudentPanel extends JPanel {
             loadStudentData();
             dialog.dispose();
         });
+        cancelButton.addActionListener(e -> dialog.dispose());
 
-        dialog.add(new JLabel());
-        dialog.add(saveButton);
-        
-        dialog.setSize(450, 350);
+        dialog.getContentPane().add(form, BorderLayout.CENTER);
+        dialog.getContentPane().add(actions, BorderLayout.SOUTH);
+        dialog.setSize(500, 420);
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
     }

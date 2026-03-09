@@ -19,30 +19,31 @@ public class TeacherPanel extends JPanel {
     public TeacherPanel(TeacherService teacherService) {
         this.teacherService = teacherService;
         setLayout(new BorderLayout());
+        UITheme.applyPanelStyle(this);
         initializeUI();
         loadTeacherData();
     }
 
     private void initializeUI() {
-        // Buttons Panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JButton addButton = new JButton("Thêm");
-        JButton editButton = new JButton("Sửa");
-        JButton deleteButton = new JButton("Xóa");
-        JButton refreshButton = new JButton("Làm mới");
-        buttonPanel.add(addButton);
-        buttonPanel.add(editButton);
-        buttonPanel.add(deleteButton);
-        buttonPanel.add(refreshButton);
-        add(buttonPanel, BorderLayout.NORTH);
+        // ===== Toolbar =====
+        JPanel toolbar = UITheme.createToolbar();
+        JButton addButton = UITheme.createSuccessButton("Thêm", "➕");
+        JButton editButton = UITheme.createPrimaryButton("Sửa", "✏️");
+        JButton deleteButton = UITheme.createDangerButton("Xóa", "🗑");
+        JButton refreshButton = UITheme.createNeutralButton("Làm mới", "🔄");
+        toolbar.add(addButton);
+        toolbar.add(editButton);
+        toolbar.add(deleteButton);
+        toolbar.add(refreshButton);
+        add(toolbar, BorderLayout.NORTH);
 
-        // Table
-        String[] columnNames = {"ID", "Họ và Tên", "Chuyên môn", "Ngày thuê", "Điện thoại", "Email", "Trạng thái"};
+        // ===== Table =====
+        String[] columnNames = { "ID", "Họ và Tên", "Chuyên môn", "Ngày thuê", "Điện thoại", "Email", "Trạng thái" };
         tableModel = new DefaultTableModel(columnNames, 0);
         teacherTable = new JTable(tableModel);
-        add(new JScrollPane(teacherTable), BorderLayout.CENTER);
+        add(UITheme.createStyledScrollPane(teacherTable), BorderLayout.CENTER);
 
-        // Button Actions
+        // ===== Actions =====
         addButton.addActionListener(e -> openTeacherDialog(null));
         editButton.addActionListener(e -> {
             int selectedRow = teacherTable.getSelectedRow();
@@ -50,20 +51,23 @@ public class TeacherPanel extends JPanel {
                 Long teacherId = (Long) tableModel.getValueAt(selectedRow, 0);
                 teacherService.findTeacherById(teacherId).ifPresent(this::openTeacherDialog);
             } else {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn một giáo viên để sửa.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn một giáo viên để sửa.", "Thông báo",
+                        JOptionPane.WARNING_MESSAGE);
             }
         });
         deleteButton.addActionListener(e -> {
             int selectedRow = teacherTable.getSelectedRow();
             if (selectedRow >= 0) {
-                int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa giáo viên này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+                int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa giáo viên này?",
+                        "Xác nhận", JOptionPane.YES_NO_OPTION);
                 if (confirm == JOptionPane.YES_OPTION) {
                     Long teacherId = (Long) tableModel.getValueAt(selectedRow, 0);
                     teacherService.deleteTeacher(teacherId);
                     loadTeacherData();
                 }
             } else {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn một giáo viên để xóa.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn một giáo viên để xóa.", "Thông báo",
+                        JOptionPane.WARNING_MESSAGE);
             }
         });
         refreshButton.addActionListener(e -> loadTeacherData());
@@ -73,7 +77,7 @@ public class TeacherPanel extends JPanel {
         tableModel.setRowCount(0);
         List<Teacher> teacherList = teacherService.getAllTeachers();
         for (Teacher teacher : teacherList) {
-            tableModel.addRow(new Object[]{
+            tableModel.addRow(new Object[] {
                     teacher.getTeacherId(),
                     teacher.getFullName(),
                     teacher.getSpecialty(),
@@ -87,39 +91,80 @@ public class TeacherPanel extends JPanel {
 
     private void openTeacherDialog(Teacher teacher) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Thông tin Giáo viên", true);
-        dialog.setLayout(new GridLayout(0, 2, 10, 10));
+        dialog.getContentPane().setLayout(new BorderLayout());
+        UITheme.styleDialog(dialog);
 
-        JTextField fullNameField = new JTextField(teacher != null ? teacher.getFullName() : "");
-        JTextField specialtyField = new JTextField(teacher != null ? teacher.getSpecialty() : "");
+        JPanel form = new JPanel(new GridBagLayout());
+        form.setOpaque(false);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(6, 8, 6, 8);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        JTextField fullNameField = new JTextField(teacher != null ? teacher.getFullName() : "", 22);
+        JTextField specialtyField = new JTextField(teacher != null ? teacher.getSpecialty() : "", 22);
         JDateChooser hireDateChooser = new JDateChooser();
         if (teacher != null && teacher.getHireDate() != null) {
             hireDateChooser.setDate(Date.from(teacher.getHireDate().atStartOfDay(ZoneId.systemDefault()).toInstant()));
         }
-        JTextField phoneField = new JTextField(teacher != null ? teacher.getPhone() : "");
-        JTextField emailField = new JTextField(teacher != null ? teacher.getEmail() : "");
+        JTextField phoneField = new JTextField(teacher != null ? teacher.getPhone() : "", 22);
+        JTextField emailField = new JTextField(teacher != null ? teacher.getEmail() : "", 22);
         JComboBox<Teacher.Status> statusComboBox = new JComboBox<>(Teacher.Status.values());
-        if (teacher != null) statusComboBox.setSelectedItem(teacher.getStatus());
+        if (teacher != null)
+            statusComboBox.setSelectedItem(teacher.getStatus());
 
-        dialog.add(new JLabel("Họ và Tên:"));
-        dialog.add(fullNameField);
-        dialog.add(new JLabel("Chuyên môn:"));
-        dialog.add(specialtyField);
-        dialog.add(new JLabel("Ngày thuê:"));
-        dialog.add(hireDateChooser);
-        dialog.add(new JLabel("Điện thoại:"));
-        dialog.add(phoneField);
-        dialog.add(new JLabel("Email:"));
-        dialog.add(emailField);
-        dialog.add(new JLabel("Trạng thái:"));
-        dialog.add(statusComboBox);
+        int row = 0;
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        form.add(UITheme.createFormLabel("Họ và Tên:"), gbc);
+        gbc.gridx = 1;
+        form.add(fullNameField, gbc);
+        row++;
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        form.add(UITheme.createFormLabel("Chuyên môn:"), gbc);
+        gbc.gridx = 1;
+        form.add(specialtyField, gbc);
+        row++;
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        form.add(UITheme.createFormLabel("Ngày thuê:"), gbc);
+        gbc.gridx = 1;
+        form.add(hireDateChooser, gbc);
+        row++;
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        form.add(UITheme.createFormLabel("Điện thoại:"), gbc);
+        gbc.gridx = 1;
+        form.add(phoneField, gbc);
+        row++;
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        form.add(UITheme.createFormLabel("Email:"), gbc);
+        gbc.gridx = 1;
+        form.add(emailField, gbc);
+        row++;
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        form.add(UITheme.createFormLabel("Trạng thái:"), gbc);
+        gbc.gridx = 1;
+        form.add(statusComboBox, gbc);
 
-        JButton saveButton = new JButton("Lưu");
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        actions.setOpaque(false);
+        actions.setBorder(BorderFactory.createEmptyBorder(12, 0, 0, 0));
+        JButton saveButton = UITheme.createPrimaryButton("Lưu", "💾");
+        JButton cancelButton = UITheme.createOutlineButton("Hủy");
+        actions.add(saveButton);
+        actions.add(cancelButton);
+
         saveButton.addActionListener(e -> {
             Teacher newTeacher = (teacher != null) ? teacher : new Teacher();
             newTeacher.setFullName(fullNameField.getText());
             newTeacher.setSpecialty(specialtyField.getText());
             if (hireDateChooser.getDate() != null) {
-                newTeacher.setHireDate(hireDateChooser.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+                newTeacher.setHireDate(
+                        hireDateChooser.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
             }
             newTeacher.setPhone(phoneField.getText());
             newTeacher.setEmail(emailField.getText());
@@ -129,11 +174,11 @@ public class TeacherPanel extends JPanel {
             loadTeacherData();
             dialog.dispose();
         });
+        cancelButton.addActionListener(e -> dialog.dispose());
 
-        dialog.add(new JLabel());
-        dialog.add(saveButton);
-
-        dialog.setSize(450, 300);
+        dialog.getContentPane().add(form, BorderLayout.CENTER);
+        dialog.getContentPane().add(actions, BorderLayout.SOUTH);
+        dialog.setSize(500, 380);
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
     }

@@ -38,10 +38,10 @@ public class MainFrame extends JFrame {
     private JButton logoutButton;
 
     public MainFrame(RoomService roomService, CourseService courseService, ClassService classService,
-                     TeacherService teacherService, StudentService studentService, EnrollmentService enrollmentService,
-                     FinanceService financeService, ScheduleService scheduleService, AttendanceService attendanceService,
-                     StaffService staffService, UserAccountService userAccountService, ResultService resultService,
-                     LoginView loginView) {
+            TeacherService teacherService, StudentService studentService, EnrollmentService enrollmentService,
+            FinanceService financeService, ScheduleService scheduleService, AttendanceService attendanceService,
+            StaffService staffService, UserAccountService userAccountService, ResultService resultService,
+            LoginView loginView) {
         super("Hệ Thống Quản Lý Trung Tâm Ngoại Ngữ");
         this.roomService = roomService;
         this.courseService = courseService;
@@ -58,27 +58,62 @@ public class MainFrame extends JFrame {
         this.loginView = loginView;
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(1024, 768);
+        setSize(1200, 800);
         setLocationRelativeTo(null);
 
-        // User Info Panel
-        JPanel topPanel = new JPanel(new BorderLayout());
+        // ===== Header Panel (Gradient) =====
+        JPanel headerPanel = UITheme.createGradientHeader();
+        headerPanel.setLayout(new BorderLayout());
+        headerPanel.setPreferredSize(new Dimension(0, 52));
+
+        // Left: App title
+        JLabel appTitle = new JLabel("    Trung Tâm Ngoại Ngữ");
+        appTitle.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        appTitle.setForeground(Color.WHITE);
+        headerPanel.add(appTitle, BorderLayout.WEST);
+
+        // Right: User info + Logout
+        JPanel userPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+        userPanel.setOpaque(false);
+
         userInfoLabel = new JLabel();
-        userInfoLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        userInfoLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        userInfoLabel.setForeground(new Color(219, 234, 254));
+
         logoutButton = new JButton("Đăng xuất");
+        logoutButton.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        logoutButton.setForeground(Color.WHITE);
+        logoutButton.setBackground(new Color(255, 255, 255, 30));
+        logoutButton.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(255, 255, 255, 80), 1, true),
+                BorderFactory.createEmptyBorder(4, 12, 4, 12)));
+        logoutButton.setFocusPainted(false);
+        logoutButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         logoutButton.addActionListener(e -> logout());
+        logoutButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                logoutButton.setBackground(new Color(255, 255, 255, 60));
+            }
 
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        rightPanel.add(userInfoLabel);
-        rightPanel.add(logoutButton);
-        topPanel.add(rightPanel, BorderLayout.EAST);
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                logoutButton.setBackground(new Color(255, 255, 255, 30));
+            }
+        });
 
-        // Tabbed Pane
-        tabbedPane = new JTabbedPane();
+        userPanel.add(userInfoLabel);
+        userPanel.add(logoutButton);
+        headerPanel.add(userPanel, BorderLayout.EAST);
 
-        // Main Panel
+        // ===== Tabbed Pane =====
+        tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+        tabbedPane.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+
+        // ===== Main Panel =====
         JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.add(topPanel, BorderLayout.NORTH);
+        mainPanel.setBackground(UITheme.BG_MAIN);
+        mainPanel.add(headerPanel, BorderLayout.NORTH);
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
 
         setContentPane(mainPanel);
@@ -94,7 +129,7 @@ public class MainFrame extends JFrame {
         } else if (user.getStudent() != null) {
             name = user.getStudent().getFullName();
         }
-        userInfoLabel.setText("Chào, " + name + " (" + user.getRole() + ")");
+        userInfoLabel.setText("Chào, " + name + "  (" + user.getRole() + ")");
         showMenuByUserRole(user.getRole().toString());
     }
 
@@ -109,63 +144,77 @@ public class MainFrame extends JFrame {
 
         if ("Admin".equalsIgnoreCase(role)) {
             StaffPanel staffPanel = new StaffPanel(staffService);
-            tabbedPane.addTab("Quản lý Nhân viên", new ImageIcon(), staffPanel, "Thêm/Sửa/Xóa Nhân viên");
+            tabbedPane.addTab("  Nhân viên  ", staffPanel);
+            tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Thêm/Sửa/Xóa Nhân viên");
 
             UserAccountPanel userAccountPanel = new UserAccountPanel(userAccountService);
-            tabbedPane.addTab("Quản lý Tài khoản", new ImageIcon(), userAccountPanel, "Thêm/Sửa/Xóa Tài khoản");
+            tabbedPane.addTab("  Tài khoản  ", userAccountPanel);
+            tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Thêm/Sửa/Xóa Tài khoản");
         }
 
         if ("Staff".equalsIgnoreCase(role) || "Admin".equalsIgnoreCase(role)) {
             StudentPanel studentPanel = new StudentPanel(studentService);
-            tabbedPane.addTab("Quản lý Học viên", new ImageIcon(), studentPanel, "Thêm/Sửa/Xóa Học viên");
+            tabbedPane.addTab("  Học viên  ", studentPanel);
+            tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Thêm/Sửa/Xóa Học viên");
 
             TeacherPanel teacherPanel = new TeacherPanel(teacherService);
-            tabbedPane.addTab("Quản lý Giáo viên", new ImageIcon(), teacherPanel, "Thêm/Sửa/Xóa Giáo viên");
+            tabbedPane.addTab("  Giáo viên  ", teacherPanel);
+            tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Thêm/Sửa/Xóa Giáo viên");
 
             RoomPanel roomPanel = new RoomPanel(roomService);
-            tabbedPane.addTab("Quản lý Phòng học", new ImageIcon(), roomPanel, "Thêm/Sửa/Xóa Phòng học");
+            tabbedPane.addTab("  Phòng học  ", roomPanel);
+            tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Thêm/Sửa/Xóa Phòng học");
 
             CoursePanel coursePanel = new CoursePanel(courseService);
-            tabbedPane.addTab("Quản lý Khóa học", new ImageIcon(), coursePanel, "Thêm/Sửa/Xóa Khóa học");
+            tabbedPane.addTab("  Khóa học  ", coursePanel);
+            tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Thêm/Sửa/Xóa Khóa học");
 
             ClassPanel classPanel = new ClassPanel(classService, courseService, teacherService, roomService);
-            tabbedPane.addTab("Quản lý Lớp học", new ImageIcon(), classPanel, "Mở/Sửa/Xóa Lớp học");
+            tabbedPane.addTab("  Lớp học  ", classPanel);
+            tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Mở/Sửa/Xóa Lớp học");
 
             EnrollmentPanel enrollmentPanel = new EnrollmentPanel(enrollmentService, studentService, classService);
-            tabbedPane.addTab("Ghi Danh Học Viên", new ImageIcon(), enrollmentPanel, "Ghi danh học viên vào lớp học");
+            tabbedPane.addTab("  Ghi danh  ", enrollmentPanel);
+            tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Ghi danh học viên vào lớp học");
 
             FinancePanel financePanel = new FinancePanel(financeService);
-            tabbedPane.addTab("Quản lý Tài chính", new ImageIcon(), financePanel, "Hóa đơn / Thanh toán học phí");
+            tabbedPane.addTab("  Tài chính  ", financePanel);
+            tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Hóa đơn / Thanh toán học phí");
 
             CenterSchedulePanel schedulePanel = new CenterSchedulePanel(scheduleService);
-            tabbedPane.addTab("Lịch hoạt động", new ImageIcon(), schedulePanel,
-                    "Xem lịch hoạt động chung của trung tâm");
+            tabbedPane.addTab("  Lịch hoạt động  ", schedulePanel);
+            tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Xem lịch hoạt động chung của trung tâm");
 
         } else if ("Teacher".equalsIgnoreCase(role)) {
             CoursePanel coursePanel = new CoursePanel(courseService);
-            tabbedPane.addTab("Quản lý Khóa học", new ImageIcon(), coursePanel, "Xem thông tin khóa học");
+            tabbedPane.addTab("  Khóa học  ", coursePanel);
+            tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Xem thông tin khóa học");
 
             if (currentUser != null && currentUser.getTeacher() != null) {
                 Long tid = currentUser.getTeacher().getTeacherId();
                 TeacherSchedulePanel teacherSchedulePanel = new TeacherSchedulePanel(scheduleService, tid);
-                tabbedPane.addTab("Lịch dạy", new ImageIcon(), teacherSchedulePanel, "Xem lịch dạy của bạn");
+                tabbedPane.addTab("  Lịch dạy  ", teacherSchedulePanel);
+                tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Xem lịch dạy của bạn");
 
                 AttendancePanel attendancePanel = new AttendancePanel(attendanceService, tid);
-                tabbedPane.addTab("Điểm danh", new ImageIcon(), attendancePanel, "Điểm danh học viên cho lớp bạn dạy");
+                tabbedPane.addTab("  Điểm danh  ", attendancePanel);
+                tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Điểm danh học viên cho lớp bạn dạy");
 
                 GradeEntryPanel gradeEntryPanel = new GradeEntryPanel(resultService, tid);
-                tabbedPane.addTab("Nhập điểm", new ImageIcon(), gradeEntryPanel,
-                        "Nhập điểm cho học viên các lớp bạn dạy");
+                tabbedPane.addTab("  Nhập điểm  ", gradeEntryPanel);
+                tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Nhập điểm cho học viên các lớp bạn dạy");
             }
 
         } else if ("Student".equalsIgnoreCase(role)) {
             if (currentUser != null && currentUser.getStudent() != null) {
                 Long sid = currentUser.getStudent().getStudentId();
                 StudentSchedulePanel studentSchedulePanel = new StudentSchedulePanel(scheduleService, sid);
-                tabbedPane.addTab("Lịch học", new ImageIcon(), studentSchedulePanel, "Xem lịch học của bạn");
+                tabbedPane.addTab("  Lịch học  ", studentSchedulePanel);
+                tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Xem lịch học của bạn");
 
                 StudentGradePanel studentGradePanel = new StudentGradePanel(resultService, sid);
-                tabbedPane.addTab("Xem điểm", new ImageIcon(), studentGradePanel, "Xem kết quả học tập của bạn");
+                tabbedPane.addTab("  Xem điểm  ", studentGradePanel);
+                tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Xem kết quả học tập của bạn");
             }
         }
 

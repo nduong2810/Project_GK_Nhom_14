@@ -1,6 +1,7 @@
 package vn.edu.ute.ui.result;
 
 import vn.edu.ute.service.ResultService;
+import vn.edu.ute.ui.UITheme;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -14,9 +15,6 @@ import java.util.stream.Collectors;
 
 /**
  * Tab "Xem điểm" — Học sinh xem điểm các lớp mình đã/đang học.
- * Read-only, tự động load khi mở tab.
- * Hiển thị TẤT CẢ lớp tham gia (có hoặc chưa có điểm).
- * Thống kê phía dưới: GPA trung bình, số lớp, tỷ lệ pass.
  */
 public class StudentGradePanel extends JPanel {
 
@@ -31,25 +29,21 @@ public class StudentGradePanel extends JPanel {
         this.resultService = resultService;
         this.studentId = studentId;
         setLayout(new BorderLayout(10, 10));
-        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
+        UITheme.applyPanelStyle(this);
         buildUI();
         loadResults();
     }
 
     private void buildUI() {
-        // ===== Thanh công cụ trên cùng =====
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 5));
-        topPanel.add(new JLabel("Kết quả học tập của bạn:"));
-
+        JPanel topPanel = UITheme.createToolbar();
+        topPanel.add(UITheme.createSectionTitle("📊 Kết quả học tập của bạn"));
         topPanel.add(Box.createHorizontalStrut(15));
-        JButton btnRefresh = new JButton("Làm mới");
+        JButton btnRefresh = UITheme.createNeutralButton("Làm mới", "🔄");
         btnRefresh.addActionListener(e -> loadResults());
         topPanel.add(btnRefresh);
 
-        // ===== Bảng điểm (read-only) =====
+        UITheme.styleTable(table);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table.setRowHeight(28);
         table.setEnabled(true);
 
         // Cột Xếp loại (4): renderer tô màu
@@ -61,7 +55,6 @@ public class StudentGradePanel extends JPanel {
         table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
         table.getColumnModel().getColumn(3).setCellRenderer(centerRenderer);
 
-        // Đặt độ rộng cột
         table.getColumnModel().getColumn(0).setPreferredWidth(40);
         table.getColumnModel().getColumn(0).setMaxWidth(50);
         table.getColumnModel().getColumn(1).setPreferredWidth(180);
@@ -71,87 +64,53 @@ public class StudentGradePanel extends JPanel {
         table.getColumnModel().getColumn(5).setPreferredWidth(250);
 
         JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(BorderFactory.createLineBorder(UITheme.NEUTRAL_200, 1, true));
 
-        // ===== Summary panel phía dưới =====
         JPanel bottomPanel = new JPanel(new BorderLayout());
-        bottomPanel.setBorder(BorderFactory.createTitledBorder("Tổng kết"));
-        lblSummary.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        bottomPanel.setBorder(UITheme.createTitledBorder("Tổng kết"));
+        bottomPanel.setBackground(UITheme.BG_CARD);
+        lblSummary.setFont(UITheme.FONT_BODY);
+        lblSummary.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
         bottomPanel.add(lblSummary, BorderLayout.CENTER);
 
-        // ===== Ráp vào =====
         add(topPanel, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
     }
 
-    // ==================== DATA LOADING ====================
-
     private void loadResults() {
         try {
-            // Lấy tất cả lớp đã tham gia (có hoặc chưa có điểm) bằng Stream merge
             List<ResultService.StudentGradeRow> rows = resultService.getStudentGrades(studentId);
             tableModel.setData(rows);
             updateSummary(rows);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this,
-                    "Lỗi tải kết quả: " + ex.getMessage(),
-                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Lỗi tải kết quả: " + ex.getMessage(), "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    /**
-     * Cập nhật thống kê tổng kết bằng Stream API.
-     */
     private void updateSummary(List<ResultService.StudentGradeRow> rows) {
         if (rows.isEmpty()) {
             lblSummary.setText("<html><i>Bạn chưa tham gia khóa học nào.</i></html>");
             return;
         }
-
-        // Tổng số lớp đã có điểm (Stream count)
-        long totalGraded = rows.stream()
-                .filter(r -> r.score() != null)
-                .count();
-
+        long totalGraded = rows.stream().filter(r -> r.score() != null).count();
         if (totalGraded == 0) {
             lblSummary.setText("<html><b>Tổng số lớp tham gia:</b> " + rows.size()
                     + " | <i>Chưa có điểm nào được nhập.</i></html>");
             return;
         }
-
-        // Tính GPA trung bình (Stream mapToDouble + average)
-        double avg = rows.stream()
-                .filter(r -> r.score() != null)
-                .mapToDouble(r -> r.score().doubleValue())
-                .average()
+        double avg = rows.stream().filter(r -> r.score() != null).mapToDouble(r -> r.score().doubleValue()).average()
                 .orElse(0.0);
-
-        // Điểm cao nhất / thấp nhất (Stream max / min)
-        double maxScore = rows.stream()
-                .filter(r -> r.score() != null)
-                .mapToDouble(r -> r.score().doubleValue())
-                .max()
+        double maxScore = rows.stream().filter(r -> r.score() != null).mapToDouble(r -> r.score().doubleValue()).max()
                 .orElse(0.0);
-
-        double minScore = rows.stream()
-                .filter(r -> r.score() != null)
-                .mapToDouble(r -> r.score().doubleValue())
-                .min()
+        double minScore = rows.stream().filter(r -> r.score() != null).mapToDouble(r -> r.score().doubleValue()).min()
                 .orElse(0.0);
-
-        // Tỷ lệ đạt (≥ 40) bằng Stream partitioningBy
-        Map<Boolean, Long> passFailMap = rows.stream()
-                .filter(r -> r.score() != null)
-                .collect(Collectors.partitioningBy(
-                        r -> r.score().doubleValue() >= 40,
-                        Collectors.counting()));
-
+        Map<Boolean, Long> passFailMap = rows.stream().filter(r -> r.score() != null)
+                .collect(Collectors.partitioningBy(r -> r.score().doubleValue() >= 40, Collectors.counting()));
         long passed = passFailMap.getOrDefault(true, 0L);
         double passRate = passed * 100.0 / totalGraded;
-
-        // Xếp loại trung bình
         String avgGrade = ResultService.calculateGrade(BigDecimal.valueOf(avg));
-
         lblSummary.setText(String.format(
                 "<html><b>Tổng số lớp:</b> %d &nbsp;|&nbsp; <b>Đã có điểm:</b> %d &nbsp;|&nbsp; "
                         + "<b>Điểm TB:</b> %.2f (%s) &nbsp;|&nbsp; "
@@ -162,9 +121,6 @@ public class StudentGradePanel extends JPanel {
 
     // ==================== INNER CLASSES ====================
 
-    /**
-     * Renderer tô màu cho cột Xếp loại.
-     */
     static class GradeColorRenderer extends DefaultTableCellRenderer {
         @Override
         public Component getTableCellRendererComponent(JTable tbl, Object value,
@@ -173,11 +129,11 @@ public class StudentGradePanel extends JPanel {
             setHorizontalAlignment(CENTER);
             if (!isSelected && value instanceof String grade && !grade.isEmpty()) {
                 c.setBackground(switch (grade) {
-                    case "A+", "A" -> new Color(198, 239, 206);
-                    case "B+", "B" -> new Color(221, 235, 247);
-                    case "C+", "C" -> new Color(255, 235, 156);
+                    case "A+", "A" -> UITheme.SUCCESS_LIGHT;
+                    case "B+", "B" -> UITheme.PRIMARY_LIGHT;
+                    case "C+", "C" -> UITheme.WARNING_LIGHT;
                     case "D+", "D" -> new Color(255, 213, 160);
-                    case "F" -> new Color(255, 199, 206);
+                    case "F" -> UITheme.DANGER_LIGHT;
                     default -> Color.WHITE;
                 });
                 c.setForeground(Color.BLACK);
@@ -185,19 +141,13 @@ public class StudentGradePanel extends JPanel {
                 c.setBackground(Color.WHITE);
                 c.setForeground(Color.BLACK);
             }
+            setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
             return c;
         }
     }
 
-    /**
-     * TableModel cho bảng xem điểm (read-only).
-     * Dùng trực tiếp ResultService.StudentGradeRow record.
-     * Cột: STT | Tên lớp | Khóa học | Điểm | Xếp loại | Nhận xét
-     */
     static class StudentGradeTableModel extends AbstractTableModel {
-        private final String[] columns = {
-                "STT", "Tên lớp", "Khóa học", "Điểm", "Xếp loại", "Nhận xét"
-        };
+        private final String[] columns = { "STT", "Tên lớp", "Khóa học", "Điểm", "Xếp loại", "Nhận xét" };
         private List<ResultService.StudentGradeRow> data = new ArrayList<>();
 
         void setData(List<ResultService.StudentGradeRow> data) {
@@ -222,7 +172,7 @@ public class StudentGradePanel extends JPanel {
 
         @Override
         public boolean isCellEditable(int row, int col) {
-            return false; // Read-only
+            return false;
         }
 
         @Override

@@ -16,30 +16,31 @@ public class StaffPanel extends JPanel {
     public StaffPanel(StaffService staffService) {
         this.staffService = staffService;
         setLayout(new BorderLayout());
+        UITheme.applyPanelStyle(this);
         initializeUI();
         loadStaffData();
     }
 
     private void initializeUI() {
-        // Buttons Panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JButton addButton = new JButton("Thêm");
-        JButton editButton = new JButton("Sửa");
-        JButton deleteButton = new JButton("Xóa");
-        JButton refreshButton = new JButton("Làm mới");
-        buttonPanel.add(addButton);
-        buttonPanel.add(editButton);
-        buttonPanel.add(deleteButton);
-        buttonPanel.add(refreshButton);
-        add(buttonPanel, BorderLayout.NORTH);
+        // ===== Toolbar =====
+        JPanel toolbar = UITheme.createToolbar();
+        JButton addButton = UITheme.createSuccessButton("Thêm", "➕");
+        JButton editButton = UITheme.createPrimaryButton("Sửa", "✏️");
+        JButton deleteButton = UITheme.createDangerButton("Xóa", "🗑");
+        JButton refreshButton = UITheme.createNeutralButton("Làm mới", "🔄");
+        toolbar.add(addButton);
+        toolbar.add(editButton);
+        toolbar.add(deleteButton);
+        toolbar.add(refreshButton);
+        add(toolbar, BorderLayout.NORTH);
 
-        // Table
-        String[] columnNames = {"ID", "Họ và Tên", "Chức vụ", "Điện thoại", "Email", "Trạng thái"};
+        // ===== Table =====
+        String[] columnNames = { "ID", "Họ và Tên", "Chức vụ", "Điện thoại", "Email", "Trạng thái" };
         tableModel = new DefaultTableModel(columnNames, 0);
         staffTable = new JTable(tableModel);
-        add(new JScrollPane(staffTable), BorderLayout.CENTER);
+        add(UITheme.createStyledScrollPane(staffTable), BorderLayout.CENTER);
 
-        // Button Actions
+        // ===== Actions =====
         addButton.addActionListener(e -> openStaffDialog(null));
         editButton.addActionListener(e -> {
             int selectedRow = staffTable.getSelectedRow();
@@ -47,20 +48,23 @@ public class StaffPanel extends JPanel {
                 Long staffId = (Long) tableModel.getValueAt(selectedRow, 0);
                 staffService.findStaffById(staffId).ifPresent(this::openStaffDialog);
             } else {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn một nhân viên để sửa.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn một nhân viên để sửa.", "Thông báo",
+                        JOptionPane.WARNING_MESSAGE);
             }
         });
         deleteButton.addActionListener(e -> {
             int selectedRow = staffTable.getSelectedRow();
             if (selectedRow >= 0) {
-                int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa nhân viên này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+                int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa nhân viên này?",
+                        "Xác nhận", JOptionPane.YES_NO_OPTION);
                 if (confirm == JOptionPane.YES_OPTION) {
                     Long staffId = (Long) tableModel.getValueAt(selectedRow, 0);
                     staffService.deleteStaff(staffId);
                     loadStaffData();
                 }
             } else {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn một nhân viên để xóa.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn một nhân viên để xóa.", "Thông báo",
+                        JOptionPane.WARNING_MESSAGE);
             }
         });
         refreshButton.addActionListener(e -> loadStaffData());
@@ -70,7 +74,7 @@ public class StaffPanel extends JPanel {
         tableModel.setRowCount(0);
         List<Staff> staffList = staffService.getAllStaff();
         for (Staff staff : staffList) {
-            tableModel.addRow(new Object[]{
+            tableModel.addRow(new Object[] {
                     staff.getStaffId(),
                     staff.getFullName(),
                     staff.getRole(),
@@ -83,29 +87,67 @@ public class StaffPanel extends JPanel {
 
     private void openStaffDialog(Staff staff) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Thông tin Nhân viên", true);
-        dialog.setLayout(new GridLayout(0, 2, 10, 10));
-        dialog.setSize(450, 250);
+        dialog.getContentPane().setLayout(new BorderLayout());
+        UITheme.styleDialog(dialog);
 
-        JTextField fullNameField = new JTextField(staff != null ? staff.getFullName() : "");
+        // Form panel
+        JPanel form = new JPanel(new GridBagLayout());
+        form.setOpaque(false);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(6, 8, 6, 8);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        JTextField fullNameField = new JTextField(staff != null ? staff.getFullName() : "", 22);
         JComboBox<Staff.Role> roleComboBox = new JComboBox<>(Staff.Role.values());
-        if (staff != null) roleComboBox.setSelectedItem(staff.getRole());
-        JTextField phoneField = new JTextField(staff != null ? staff.getPhone() : "");
-        JTextField emailField = new JTextField(staff != null ? staff.getEmail() : "");
+        if (staff != null)
+            roleComboBox.setSelectedItem(staff.getRole());
+        JTextField phoneField = new JTextField(staff != null ? staff.getPhone() : "", 22);
+        JTextField emailField = new JTextField(staff != null ? staff.getEmail() : "", 22);
         JComboBox<Staff.Status> statusComboBox = new JComboBox<>(Staff.Status.values());
-        if (staff != null) statusComboBox.setSelectedItem(staff.getStatus());
+        if (staff != null)
+            statusComboBox.setSelectedItem(staff.getStatus());
 
-        dialog.add(new JLabel("Họ và Tên:"));
-        dialog.add(fullNameField);
-        dialog.add(new JLabel("Chức vụ:"));
-        dialog.add(roleComboBox);
-        dialog.add(new JLabel("Điện thoại:"));
-        dialog.add(phoneField);
-        dialog.add(new JLabel("Email:"));
-        dialog.add(emailField);
-        dialog.add(new JLabel("Trạng thái:"));
-        dialog.add(statusComboBox);
+        int row = 0;
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        form.add(UITheme.createFormLabel("Họ và Tên:"), gbc);
+        gbc.gridx = 1;
+        form.add(fullNameField, gbc);
+        row++;
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        form.add(UITheme.createFormLabel("Chức vụ:"), gbc);
+        gbc.gridx = 1;
+        form.add(roleComboBox, gbc);
+        row++;
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        form.add(UITheme.createFormLabel("Điện thoại:"), gbc);
+        gbc.gridx = 1;
+        form.add(phoneField, gbc);
+        row++;
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        form.add(UITheme.createFormLabel("Email:"), gbc);
+        gbc.gridx = 1;
+        form.add(emailField, gbc);
+        row++;
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        form.add(UITheme.createFormLabel("Trạng thái:"), gbc);
+        gbc.gridx = 1;
+        form.add(statusComboBox, gbc);
 
-        JButton saveButton = new JButton("Lưu");
+        // Buttons
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        actions.setOpaque(false);
+        actions.setBorder(BorderFactory.createEmptyBorder(12, 0, 0, 0));
+        JButton saveButton = UITheme.createPrimaryButton("Lưu", "💾");
+        JButton cancelButton = UITheme.createOutlineButton("Hủy");
+        actions.add(saveButton);
+        actions.add(cancelButton);
+
         saveButton.addActionListener(e -> {
             Staff newStaff = (staff != null) ? staff : new Staff();
             newStaff.setFullName(fullNameField.getText());
@@ -118,10 +160,11 @@ public class StaffPanel extends JPanel {
             loadStaffData();
             dialog.dispose();
         });
+        cancelButton.addActionListener(e -> dialog.dispose());
 
-        dialog.add(new JLabel());
-        dialog.add(saveButton);
-
+        dialog.getContentPane().add(form, BorderLayout.CENTER);
+        dialog.getContentPane().add(actions, BorderLayout.SOUTH);
+        dialog.setSize(480, 340);
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
     }
