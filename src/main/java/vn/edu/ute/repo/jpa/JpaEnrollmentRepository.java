@@ -11,16 +11,24 @@ public class JpaEnrollmentRepository implements EnrollmentRepository {
     @Override
     public List<Enrollment> findAll(EntityManager em) {
         return em.createQuery(
-                "SELECT e FROM Enrollment e JOIN FETCH e.student JOIN FETCH e.classEntity ORDER BY e.enrollmentDate DESC",
-                Enrollment.class)
+                        "SELECT e FROM Enrollment e " +
+                                "JOIN FETCH e.student " +
+                                "JOIN FETCH e.classEntity ce " +
+                                "JOIN FETCH ce.course " +
+                                "ORDER BY e.enrollmentDate DESC",
+                        Enrollment.class)
                 .getResultList();
     }
 
     @Override
     public Enrollment findById(EntityManager em, Long id) {
         return em.createQuery(
-                "SELECT e FROM Enrollment e JOIN FETCH e.student JOIN FETCH e.classEntity WHERE e.enrollmentId = :id",
-                Enrollment.class)
+                        "SELECT e FROM Enrollment e " +
+                                "JOIN FETCH e.student " +
+                                "JOIN FETCH e.classEntity ce " +
+                                "JOIN FETCH ce.course " +
+                                "WHERE e.enrollmentId = :id",
+                        Enrollment.class)
                 .setParameter("id", id)
                 .getSingleResult();
     }
@@ -28,8 +36,12 @@ public class JpaEnrollmentRepository implements EnrollmentRepository {
     @Override
     public List<Enrollment> findByStudentId(EntityManager em, Long studentId) {
         return em.createQuery(
-                "SELECT e FROM Enrollment e JOIN FETCH e.classEntity WHERE e.student.studentId = :sid ORDER BY e.enrollmentDate DESC",
-                Enrollment.class)
+                        "SELECT e FROM Enrollment e " +
+                                "JOIN FETCH e.classEntity ce " +
+                                "JOIN FETCH ce.course " +
+                                "WHERE e.student.studentId = :sid " +
+                                "ORDER BY e.enrollmentDate DESC",
+                        Enrollment.class)
                 .setParameter("sid", studentId)
                 .getResultList();
     }
