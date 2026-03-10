@@ -66,12 +66,21 @@ public class PromotionPanel extends JPanel {
     }
 
     private void loadData() {
-        try {
-            tableModel.setData(promotionService.getAllPromotions());
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi tải dữ liệu khuyến mãi: " + ex.getMessage(),
-                    "Lỗi", JOptionPane.ERROR_MESSAGE);
-        }
+        new SwingWorker<java.util.List<vn.edu.ute.model.Promotion>, Void>() {
+            @Override
+            protected java.util.List<vn.edu.ute.model.Promotion> doInBackground() throws Exception {
+                return promotionService.getAllPromotions();
+            }
+            @Override
+            protected void done() {
+                try {
+                    tableModel.setData(get());
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(PromotionPanel.this, "Lỗi tải dữ liệu khuyến mãi: " + ex.getMessage(),
+                            "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
     }
 
     private void onAdd() {

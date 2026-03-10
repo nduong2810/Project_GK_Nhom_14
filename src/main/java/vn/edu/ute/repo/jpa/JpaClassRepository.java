@@ -9,12 +9,13 @@ public class JpaClassRepository implements ClassRepository {
 
     @Override
     public List<ClassEntity> findAll(EntityManager em) {
-        // Dùng LEFT JOIN FETCH để nạp sẵn dữ liệu của Course, Teacher, Room.
+        // Dùng LEFT JOIN FETCH để nạp sẵn dữ liệu của Course, Teacher, Room, Branch.
         // Việc này giúp tránh lỗi "LazyInitializationException" khi hiển thị lên giao diện JTable.
         String jpql = "SELECT c FROM ClassEntity c " +
                 "LEFT JOIN FETCH c.course " +
                 "LEFT JOIN FETCH c.teacher " +
                 "LEFT JOIN FETCH c.room " +
+                "LEFT JOIN FETCH c.branch " +
                 "ORDER BY c.startDate DESC";
         return em.createQuery(jpql, ClassEntity.class).getResultList();
     }

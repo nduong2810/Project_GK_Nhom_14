@@ -100,13 +100,22 @@ public class NotificationPanel extends JPanel {
     }
 
     private void loadData() {
-        try {
-            tableModel.setData(notificationService.getAllNotifications());
-            txtPreview.setText("");
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi tải dữ liệu thông báo: " + ex.getMessage(),
-                    "Lỗi", JOptionPane.ERROR_MESSAGE);
-        }
+        new SwingWorker<java.util.List<vn.edu.ute.model.Notification>, Void>() {
+            @Override
+            protected java.util.List<vn.edu.ute.model.Notification> doInBackground() throws Exception {
+                return notificationService.getAllNotifications();
+            }
+            @Override
+            protected void done() {
+                try {
+                    tableModel.setData(get());
+                    txtPreview.setText("");
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(NotificationPanel.this, "Lỗi tải dữ liệu thông báo: " + ex.getMessage(),
+                            "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
     }
 
     private void onAdd() {

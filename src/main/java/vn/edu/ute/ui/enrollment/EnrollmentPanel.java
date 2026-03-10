@@ -72,11 +72,20 @@ public class EnrollmentPanel extends JPanel {
     }
 
     private void loadData() {
-        try {
-            tableModel.setData(enrollmentService.getAllEnrollments());
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi tải dữ liệu: " + ex.getMessage());
-        }
+        new SwingWorker<java.util.List<vn.edu.ute.model.Enrollment>, Void>() {
+            @Override
+            protected java.util.List<vn.edu.ute.model.Enrollment> doInBackground() throws Exception {
+                return enrollmentService.getAllEnrollments();
+            }
+            @Override
+            protected void done() {
+                try {
+                    tableModel.setData(get());
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(EnrollmentPanel.this, "Lỗi tải dữ liệu: " + ex.getMessage());
+                }
+            }
+        }.execute();
     }
 
     private void onAdd() {

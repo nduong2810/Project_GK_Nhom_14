@@ -64,11 +64,20 @@ public class CoursePanel extends JPanel {
     }
 
     private void loadData() {
-        try {
-            tableModel.setData(courseService.getAllCourses());
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi tải dữ liệu: " + ex.getMessage());
-        }
+        new SwingWorker<java.util.List<vn.edu.ute.model.Course>, Void>() {
+            @Override
+            protected java.util.List<vn.edu.ute.model.Course> doInBackground() throws Exception {
+                return courseService.getAllCourses();
+            }
+            @Override
+            protected void done() {
+                try {
+                    tableModel.setData(get());
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(CoursePanel.this, "Lỗi tải dữ liệu: " + ex.getMessage());
+                }
+            }
+        }.execute();
     }
 
     private void onAdd() {

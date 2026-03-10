@@ -66,12 +66,22 @@ public class RoomPanel extends JPanel {
     }
 
     private void loadData() {
-        try {
-            tableModel.setData(roomService.getAllRooms());
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi tải dữ liệu: " + ex.getMessage(), "Lỗi",
-                    JOptionPane.ERROR_MESSAGE);
-        }
+        new SwingWorker<java.util.List<Room>, Void>() {
+            @Override
+            protected java.util.List<Room> doInBackground() throws Exception {
+                return roomService.getAllRooms();
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    tableModel.setData(get());
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(RoomPanel.this, "Lỗi tải dữ liệu: " + ex.getMessage(), "Lỗi",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
     }
 
     private void onAdd() {

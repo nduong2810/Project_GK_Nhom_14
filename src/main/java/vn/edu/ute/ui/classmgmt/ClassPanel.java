@@ -78,11 +78,22 @@ public class ClassPanel extends JPanel {
     }
 
     private void loadData() {
-        try {
-            tableModel.setData(classService.getAllClasses());
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi tải dữ liệu lớp: " + ex.getMessage());
-        }
+        new SwingWorker<java.util.List<ClassEntity>, Void>() {
+            @Override
+            protected java.util.List<ClassEntity> doInBackground() throws Exception {
+                return classService.getAllClasses();
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    tableModel.setData(get());
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(ClassPanel.this, "Lỗi tải dữ liệu lớp: " + ex.getMessage(),
+                            "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
     }
 
     private void onAdd() {

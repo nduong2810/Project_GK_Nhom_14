@@ -10,7 +10,11 @@ public class JpaRoomRepository implements RoomRepository {
 
     @Override
     public List<Room> findAll(EntityManager em) {
-        return em.createQuery("SELECT r FROM Room r ORDER BY r.roomName", Room.class)
+        return em.createQuery(
+                "SELECT r FROM Room r " +
+                "LEFT JOIN FETCH r.branch " +
+                "ORDER BY r.roomName",
+                Room.class)
                 .getResultList();
     }
 
@@ -39,7 +43,12 @@ public class JpaRoomRepository implements RoomRepository {
 
     @Override
     public List<Room> findActiveRooms(EntityManager em) {
-        return em.createQuery("SELECT r FROM Room r WHERE r.status = :status ORDER BY r.roomName", Room.class)
+        return em.createQuery(
+                "SELECT r FROM Room r " +
+                "LEFT JOIN FETCH r.branch " +
+                "WHERE r.status = :status " +
+                "ORDER BY r.roomName",
+                Room.class)
                 .setParameter("status", Room.Status.Active)
                 .getResultList();
     }
