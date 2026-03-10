@@ -8,7 +8,8 @@ import java.text.NumberFormat;
 import java.util.*;
 
 public class InvoiceTableModel extends AbstractTableModel {
-    private final String[] columns = { "ID", "Học Viên", "Tổng Tiền", "Còn Thiếu", "Ngày Xuất", "Trạng Thái",
+    private final String[] columns = { "ID", "Học Viên", "Tổng Tiền", "Còn Thiếu", "Khuyến Mãi", "Ngày Xuất",
+            "Trạng Thái",
             "Ghi Chú" };
     private List<Invoice> data = new ArrayList<>();
     private List<Invoice> filteredData = new ArrayList<>();
@@ -91,8 +92,10 @@ public class InvoiceTableModel extends AbstractTableModel {
             case 3:
                 return currencyFmt.format(remaining);
             case 4:
-                return inv.getIssueDate() != null ? inv.getIssueDate().toString() : "";
+                return inv.getPromotion() != null ? inv.getPromotion().getPromoName() : "—";
             case 5:
+                return inv.getIssueDate() != null ? inv.getIssueDate().toString() : "";
+            case 6:
                 switch (inv.getStatus()) {
                     case Draft:
                         return "Nháp";
@@ -105,7 +108,7 @@ public class InvoiceTableModel extends AbstractTableModel {
                     default:
                         return inv.getStatus().name();
                 }
-            case 6:
+            case 7:
                 return inv.getNote() != null ? inv.getNote() : "";
             default:
                 return "";

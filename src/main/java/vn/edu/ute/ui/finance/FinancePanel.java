@@ -2,6 +2,7 @@ package vn.edu.ute.ui.finance;
 
 import vn.edu.ute.model.Invoice;
 import vn.edu.ute.service.FinanceService;
+import vn.edu.ute.service.PromotionService;
 import vn.edu.ute.ui.UITheme;
 
 import javax.swing.*;
@@ -15,14 +16,16 @@ import java.util.List;
 public class FinancePanel extends JPanel {
 
     private final FinanceService financeService;
+    private final PromotionService promotionService;
     private final InvoiceTableModel invoiceTableModel = new InvoiceTableModel();
     private final PaymentTableModel paymentTableModel = new PaymentTableModel();
     private final JTable invoiceTable = new JTable(invoiceTableModel);
     private final JTable paymentTable = new JTable(paymentTableModel);
     private final JTextField txtSearch = UITheme.createSearchField("Nhập ID hoặc tên học viên...", 22);
 
-    public FinancePanel(FinanceService financeService) {
+    public FinancePanel(FinanceService financeService, PromotionService promotionService) {
         this.financeService = financeService;
+        this.promotionService = promotionService;
         setLayout(new BorderLayout(10, 10));
         UITheme.applyPanelStyle(this);
         buildUI();
@@ -148,7 +151,7 @@ public class FinancePanel extends JPanel {
 
     private void onCreateInvoice() {
         CreateInvoiceDialog dlg = new CreateInvoiceDialog((Frame) SwingUtilities.getWindowAncestor(this),
-                financeService);
+                financeService, promotionService);
         dlg.setVisible(true);
         if (dlg.isSaved()) {
             loadInvoices();

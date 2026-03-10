@@ -6,6 +6,7 @@ import vn.edu.ute.ui.attendance.AttendancePanel;
 import vn.edu.ute.ui.classmgmt.ClassPanel;
 import vn.edu.ute.ui.course.CoursePanel;
 import vn.edu.ute.ui.finance.FinancePanel;
+import vn.edu.ute.ui.promotion.PromotionPanel;
 import vn.edu.ute.ui.result.GradeEntryPanel;
 import vn.edu.ute.ui.result.StudentGradePanel;
 import vn.edu.ute.ui.room.RoomPanel;
@@ -31,6 +32,7 @@ public class MainFrame extends JFrame {
     private StaffService staffService;
     private ResultService resultService;
     private UserAccountService userAccountService;
+    private PromotionService promotionService;
     private LoginView loginView;
 
     private UserAccount currentUser;
@@ -41,6 +43,7 @@ public class MainFrame extends JFrame {
             TeacherService teacherService, StudentService studentService, EnrollmentService enrollmentService,
             FinanceService financeService, ScheduleService scheduleService, AttendanceService attendanceService,
             StaffService staffService, UserAccountService userAccountService, ResultService resultService,
+            PromotionService promotionService,
             LoginView loginView) {
         super("Hệ Thống Quản Lý Trung Tâm Ngoại Ngữ");
         this.roomService = roomService;
@@ -55,6 +58,7 @@ public class MainFrame extends JFrame {
         this.staffService = staffService;
         this.userAccountService = userAccountService;
         this.resultService = resultService;
+        this.promotionService = promotionService;
         this.loginView = loginView;
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -177,9 +181,13 @@ public class MainFrame extends JFrame {
             tabbedPane.addTab("  Ghi danh  ", enrollmentPanel);
             tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Ghi danh học viên vào lớp học");
 
-            FinancePanel financePanel = new FinancePanel(financeService);
+            FinancePanel financePanel = new FinancePanel(financeService, promotionService);
             tabbedPane.addTab("  Tài chính  ", financePanel);
             tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Hóa đơn / Thanh toán học phí");
+
+            PromotionPanel promotionPanel = new PromotionPanel(promotionService);
+            tabbedPane.addTab("  Khuyến mãi  ", promotionPanel);
+            tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Quản lý chương trình khuyến mãi");
 
             CenterSchedulePanel schedulePanel = new CenterSchedulePanel(scheduleService);
             tabbedPane.addTab("  Lịch hoạt động  ", schedulePanel);

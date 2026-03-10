@@ -5,8 +5,10 @@ import vn.edu.ute.model.*;
 import vn.edu.ute.repo.EnrollmentRepository;
 import vn.edu.ute.repo.InvoiceRepository;
 import vn.edu.ute.repo.PaymentRepository;
+import vn.edu.ute.repo.PromotionRepository;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,26 +18,29 @@ public class FinanceService {
     private final InvoiceRepository invoiceRepo;
     private final PaymentRepository paymentRepo;
     private final EnrollmentRepository enrollmentRepo;
+    private final PromotionRepository promotionRepo;
     private final TransactionManager tx;
 
     // Dependency Injection qua Constructor
     public FinanceService(InvoiceRepository invoiceRepo,
             PaymentRepository paymentRepo,
             EnrollmentRepository enrollmentRepo,
+            PromotionRepository promotionRepo,
             TransactionManager tx) {
         this.invoiceRepo = invoiceRepo;
         this.paymentRepo = paymentRepo;
         this.enrollmentRepo = enrollmentRepo;
+        this.promotionRepo = promotionRepo;
         this.tx = tx;
     }
 
     // ==================== INVOICE ====================
 
     /**
-     * Tạo hóa đơn từ một enrollment.
-     * Học phí = Course.fee của lớp mà học viên đăng ký.
+     * Tạo hóa đơn từ một enrollment, có thể áp dụng khuyến mãi.
+     * Học phí = Course.fee - discount (nếu có promotion).
      */
-    public void createInvoice(Enrollment enrollment, String note) throws Exception {
+    public void createInvoice(Enrollment enrollment, String note, Long promotionId) throws Exception {
         tx.runInTransaction(em -> {
             // Load lại enrollment trong session hiện tại để tránh detached entity
             Enrollment e = enrollmentRepo.findById(em, enrollment.getEnrollmentId());
@@ -44,10 +49,23 @@ public class FinanceService {
             Invoice invoice = new Invoice();
             invoice.setStudent(e.getStudent());
             invoice.setEnrollment(e);
-            invoice.setTotalAmount(courseFee);
             invoice.setIssueDate(LocalDate.now());
             invoice.setStatus(Invoice.Status.Issued);
             invoice.setNote(note);
+
+            // Áp dụng khuyến mãi nếu có
+            if (promotionId != null) {
+                Promotion promo = promotionRepo.findById(em, promotionId);
+                if (promo != null) {
+                    BigDecimal discount = calculateDiscount(courseFee, promo);
+                    invoice.setTotalAmount(courseFee.subtract(discount));
+                    invoice.setPromotion(promo);
+                } else {
+                    invoice.setTotalAmount(courseFee);
+                }
+            } else {
+                invoice.setTotalAmount(courseFee);
+            }
 
             invoiceRepo.save(em, invoice);
             return null;
@@ -55,10 +73,10 @@ public class FinanceService {
     }
 
     /**
-     * Tạo hóa đơn và liên kết với enrollment (lưu enrollment_id trong note để truy
-     * vết).
+     * Tạo hóa đơn và liên kết với enrollment, có thể áp dụng khuyến mãi.
+     * Trả về invoice vừa tạo.
      */
-    public Invoice createInvoiceAndReturn(Enrollment enrollment, String note) throws Exception {
+    public Invoice createInvoiceAndReturn(Enrollment enrollment, String note, Long promotionId) throws Exception {
         return tx.runInTransaction(em -> {
             Enrollment e = enrollmentRepo.findById(em, enrollment.getEnrollmentId());
             BigDecimal courseFee = e.getClassEntity().getCourse().getFee();
@@ -66,7 +84,6 @@ public class FinanceService {
             Invoice invoice = new Invoice();
             invoice.setStudent(e.getStudent());
             invoice.setEnrollment(e);
-            invoice.setTotalAmount(courseFee);
             invoice.setIssueDate(LocalDate.now());
             invoice.setStatus(Invoice.Status.Issued);
             // Ghi chú: ưu tiên ghi chú user nhập, nếu trống thì tự sinh
@@ -76,10 +93,48 @@ public class FinanceService {
                 invoice.setNote("Học phí lớp " + e.getClassEntity().getClassName());
             }
 
+            // Áp dụng khuyến mãi nếu có
+            if (promotionId != null) {
+                Promotion promo = promotionRepo.findById(em, promotionId);
+                if (promo != null) {
+                    BigDecimal discount = calculateDiscount(courseFee, promo);
+                    invoice.setTotalAmount(courseFee.subtract(discount));
+                    invoice.setPromotion(promo);
+                } else {
+                    invoice.setTotalAmount(courseFee);
+                }
+            } else {
+                invoice.setTotalAmount(courseFee);
+            }
+
             invoiceRepo.save(em, invoice);
             em.flush(); // Đảm bảo ID được sinh ra
             return invoice;
         });
+    }
+
+    /**
+     * Tính số tiền giảm giá dựa trên promotion.
+     * - Percent: fee * value / 100 (cap = fee)
+     * - Amount: min(value, fee)
+     */
+    private BigDecimal calculateDiscount(BigDecimal originalFee, Promotion promotion) {
+        if (promotion == null || originalFee == null) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal discount;
+        if (promotion.getDiscountType() == Promotion.DiscountType.Percent) {
+            discount = originalFee.multiply(promotion.getDiscountValue())
+                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        } else {
+            discount = promotion.getDiscountValue();
+        }
+        // Đảm bảo discount không vượt quá fee và không âm
+        if (discount.compareTo(originalFee) > 0)
+            discount = originalFee;
+        if (discount.compareTo(BigDecimal.ZERO) < 0)
+            discount = BigDecimal.ZERO;
+        return discount;
     }
 
     /**

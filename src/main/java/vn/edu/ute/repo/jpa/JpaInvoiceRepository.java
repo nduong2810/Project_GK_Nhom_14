@@ -11,7 +11,8 @@ public class JpaInvoiceRepository implements InvoiceRepository {
     @Override
     public List<Invoice> findAll(EntityManager em) {
         return em.createQuery(
-                "SELECT i FROM Invoice i JOIN FETCH i.student ORDER BY i.issueDate DESC", Invoice.class)
+                "SELECT i FROM Invoice i JOIN FETCH i.student LEFT JOIN FETCH i.promotion ORDER BY i.issueDate DESC",
+                Invoice.class)
                 .getResultList();
     }
 

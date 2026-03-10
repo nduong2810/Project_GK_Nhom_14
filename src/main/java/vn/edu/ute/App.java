@@ -3,6 +3,7 @@ package vn.edu.ute;
 import vn.edu.ute.controller.LoginController;
 import vn.edu.ute.db.TransactionManager;
 import vn.edu.ute.repo.*;
+import vn.edu.ute.repo.jpa.JpaPromotionRepository;
 import vn.edu.ute.repo.jpa.JpaResultRepository;
 import vn.edu.ute.repo.jpa.*;
 import vn.edu.ute.service.*;
@@ -34,11 +35,12 @@ public class App {
         StudentRepository studentRepo = new JpaStudentRepository();
         ClassRepository classRepo = new JpaClassRepository();
         ResultRepository resultRepo = new JpaResultRepository();
+        PromotionRepository promotionRepo = new JpaPromotionRepository();
 
         // 4. Khởi tạo các Services và tiêm Repositories + TX vào (Tầng nghiệp vụ)
         RoomService roomService = new RoomService(roomRepo, tx);
         CourseService courseService = new CourseService(courseRepo, tx);
-        FinanceService financeService = new FinanceService(invoiceRepo, paymentRepo, enrollmentRepo, tx);
+        FinanceService financeService = new FinanceService(invoiceRepo, paymentRepo, enrollmentRepo, promotionRepo, tx);
         StaffService staffService = new StaffService(staffRepo, tx);
         ScheduleService scheduleService = new ScheduleService(scheduleRepo, tx);
         AttendanceService attendanceService = new AttendanceService(attendanceRepo, tx);
@@ -48,6 +50,7 @@ public class App {
         UserAccountService userAccountService = new UserAccountService(userAccountRepo, tx);
         ResultService resultService = new ResultService(resultRepo, tx);
         EnrollmentService enrollmentService = new EnrollmentService(enrollmentRepo, tx);
+        PromotionService promotionService = new PromotionService(promotionRepo, tx);
 
         // 5. Khởi chạy MainFrame trên luồng sự kiện của Swing
         SwingUtilities.invokeLater(() -> {
@@ -55,6 +58,7 @@ public class App {
             MainFrame mainFrame = new MainFrame(roomService, courseService, classService, teacherService,
                     studentService, enrollmentService,
                     financeService, scheduleService, attendanceService, staffService, userAccountService, resultService,
+                    promotionService,
                     loginView);
             new LoginController(loginView, userAccountRepo, mainFrame);
             loginView.setVisible(true);
