@@ -81,20 +81,33 @@ public class TeacherSchedulePanel extends JPanel {
 
         add(UITheme.createTopPanel(leftPanel, searchPanel), BorderLayout.NORTH);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.getColumnModel().getColumn(6).setPreferredWidth(220);
+        table.getColumnModel().getColumn(6).setMinWidth(150);
         add(UITheme.createStyledScrollPane(table), BorderLayout.CENTER);
     }
 
     private void loadData() {
-        try {
-            allSchedules = scheduleService.getSchedulesByTeacher(teacherId);
-            tableModel.setData(allSchedules);
-            txtSearch.setText("");
-            txtFromDate.setText("");
-            txtToDate.setText("");
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi tải lịch dạy: " + ex.getMessage(), "Lỗi",
-                    JOptionPane.ERROR_MESSAGE);
-        }
+        tableModel.setData(java.util.Collections.emptyList());
+        new SwingWorker<List<Schedule>, Void>() {
+            @Override
+            protected List<Schedule> doInBackground() throws Exception {
+                return scheduleService.getSchedulesByTeacher(teacherId);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    allSchedules = get();
+                    tableModel.setData(allSchedules);
+                    txtSearch.setText("");
+                    txtFromDate.setText("");
+                    txtToDate.setText("");
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(TeacherSchedulePanel.this,
+                            "Lỗi tải lịch dạy: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
     }
 
     private void onFilterByDate() {

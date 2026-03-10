@@ -1,0 +1,92 @@
+package vn.edu.ute.service;
+
+import vn.edu.ute.db.TransactionManager;
+import vn.edu.ute.model.Notification;
+import vn.edu.ute.model.UserAccount;
+import vn.edu.ute.repo.NotificationRepository;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class NotificationService {
+
+    private final NotificationRepository notificationRepo;
+    private final TransactionManager tx;
+
+    public NotificationService(NotificationRepository notificationRepo, TransactionManager tx) {
+        this.notificationRepo = notificationRepo;
+        this.tx = tx;
+    }
+
+    // ==================== CRUD ====================
+
+    /**
+     * Tạo thông báo mới, gắn người tạo (dùng lambda).
+     */
+    public void createNotification(Notification notification, UserAccount creator) throws Exception {
+        tx.runInTransaction(em -> {
+            // Gắn người tạo nếu có
+            if (creator != null) {
+                UserAccount managedUser = em.find(UserAccount.class, creator.getUserId());
+                notification.setCreatedByUser(managedUser);
+            }
+            notificationRepo.save(em, notification);
+            return null;
+        });
+    }
+
+    /**
+     * Xóa thông báo theo ID.
+     */
+    public void deleteNotification(Long notificationId) throws Exception {
+        tx.runInTransaction(em -> {
+            Notification existing = notificationRepo.findById(em, notificationId);
+            if (existing == null) {
+                throw new IllegalArgumentException("Không tìm thấy thông báo với ID: " + notificationId);
+            }
+            notificationRepo.delete(em, notificationId);
+            return null;
+        });
+    }
+
+    // ==================== QUERY ====================
+
+    /**
+     * Lấy tất cả thông báo (cho Admin/Staff quản lý).
+     */
+    public List<Notification> getAllNotifications() throws Exception {
+        return tx.runInTransaction(em -> notificationRepo.findAll(em));
+    }
+
+    /**
+     * Lấy thông báo dành cho một role cụ thể (dùng repo query).
+     * - Trả về thông báo có targetRole = 'All' HOẶC targetRole = role truyền vào.
+     */
+    public List<Notification> getNotificationsForRole(Notification.TargetRole role) throws Exception {
+        return tx.runInTransaction(em -> notificationRepo.findByTargetRole(em, role));
+    }
+
+    /**
+     * Lấy thông báo phù hợp với user hiện tại (dùng Stream API + lambda).
+     * - Xác định role từ UserAccount → mapping tương ứng sang
+     * Notification.TargetRole.
+     * - Lọc: targetRole = All HOẶC targetRole match role của user.
+     */
+    public List<Notification> getNotificationsForUser(UserAccount user) throws Exception {
+        // Map UserAccount.Role -> Notification.TargetRole
+        Notification.TargetRole userTargetRole = switch (user.getRole()) {
+            case Student -> Notification.TargetRole.Student;
+            case Teacher -> Notification.TargetRole.Teacher;
+            case Staff -> Notification.TargetRole.Staff;
+            case Admin -> Notification.TargetRole.Staff; // Admin xem thông báo Staff
+        };
+
+        List<Notification> all = tx.runInTransaction(em -> notificationRepo.findAll(em));
+
+        // Dùng Stream để lọc theo role
+        return all.stream()
+                .filter(n -> n.getTargetRole() == Notification.TargetRole.All
+                        || n.getTargetRole() == userTargetRole)
+                .collect(Collectors.toList());
+    }
+}

@@ -1,5 +1,6 @@
 package vn.edu.ute.ui.classmgmt;
 
+import vn.edu.ute.model.Branch;
 import vn.edu.ute.model.ClassEntity;
 import vn.edu.ute.model.Course;
 import vn.edu.ute.model.Room;
@@ -18,6 +19,7 @@ public class ClassFormDialog extends JDialog {
     private final JComboBox<Course> cboCourse = new JComboBox<>();
     private final JComboBox<Teacher> cboTeacher = new JComboBox<>();
     private final JComboBox<Room> cboRoom = new JComboBox<>();
+    private final JComboBox<Branch> cboBranch = new JComboBox<>();
     private final JTextField txtStartDate = new JTextField(10);
     private final JTextField txtEndDate = new JTextField(10);
     private final JTextField txtMaxStudent = new JTextField(5);
@@ -28,7 +30,7 @@ public class ClassFormDialog extends JDialog {
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public ClassFormDialog(Frame owner, String title, ClassEntity existing, List<Course> courses,
-            List<Teacher> teachers, List<Room> rooms) {
+            List<Teacher> teachers, List<Room> rooms, List<Branch> branches) {
         super(owner, title, true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
@@ -40,6 +42,8 @@ public class ClassFormDialog extends JDialog {
         cboRoom.addItem(null);
         for (Room r : rooms)
             cboRoom.addItem(r);
+        cboBranch.addItem(null);
+        branches.forEach(cboBranch::addItem);
 
         setupComboBoxRenderers();
         buildUI();
@@ -56,6 +60,13 @@ public class ClassFormDialog extends JDialog {
                 setComboSelection(cboTeacher, existing.getTeacher().getTeacherId());
             if (existing.getRoom() != null)
                 setComboSelection(cboRoom, existing.getRoom().getRoomId());
+            // Set selected branch dùng Stream
+            if (existing.getBranch() != null) {
+                branches.stream()
+                        .filter(b -> b.getBranchId().equals(existing.getBranch().getBranchId()))
+                        .findFirst()
+                        .ifPresent(cboBranch::setSelectedItem);
+            }
             this.classEntity = existing;
         } else {
             this.classEntity = new ClassEntity();
@@ -101,6 +112,23 @@ public class ClassFormDialog extends JDialog {
                     setText("-- Chưa xếp phòng --");
                 return this;
             }
+        });
+        // Branch renderer dùng lambda
+        cboBranch.setRenderer((list, value, index, isSelected, cellHasFocus) -> {
+            JLabel label = new JLabel();
+            label.setFont(UITheme.FONT_BODY);
+            label.setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
+            if (value instanceof Branch b) {
+                label.setText(b.getBranchName());
+            } else {
+                label.setText("-- Chưa chọn chi nhánh --");
+            }
+            if (isSelected) {
+                label.setBackground(list.getSelectionBackground());
+                label.setForeground(list.getSelectionForeground());
+                label.setOpaque(true);
+            }
+            return label;
         });
     }
 
@@ -159,6 +187,13 @@ public class ClassFormDialog extends JDialog {
         r++;
         g.gridx = 0;
         g.gridy = r;
+        form.add(UITheme.createFormLabel("Chi Nhánh:"), g);
+        g.gridx = 1;
+        cboBranch.setFont(UITheme.FONT_BODY);
+        form.add(cboBranch, g);
+        r++;
+        g.gridx = 0;
+        g.gridy = r;
         form.add(UITheme.createFormLabel("Ngày Khai Giảng (*):"), g);
         g.gridx = 1;
         form.add(txtStartDate, g);
@@ -184,7 +219,7 @@ public class ClassFormDialog extends JDialog {
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actions.setOpaque(false);
         actions.setBorder(BorderFactory.createEmptyBorder(12, 0, 0, 0));
-        JButton btnSave = UITheme.createPrimaryButton("Lưu", "💾");
+        JButton btnSave = UITheme.createPrimaryButton("Lưu", "");
         JButton btnCancel = UITheme.createOutlineButton("Hủy");
         btnSave.addActionListener(e -> onSave());
         btnCancel.addActionListener(e -> dispose());
@@ -231,6 +266,7 @@ public class ClassFormDialog extends JDialog {
             classEntity.setCourse(selectedCourse);
             classEntity.setTeacher((Teacher) cboTeacher.getSelectedItem());
             classEntity.setRoom((Room) cboRoom.getSelectedItem());
+            classEntity.setBranch((Branch) cboBranch.getSelectedItem());
             classEntity.setStartDate(startDate);
             classEntity.setEndDate(endDate);
             classEntity.setMaxStudent(maxStd);

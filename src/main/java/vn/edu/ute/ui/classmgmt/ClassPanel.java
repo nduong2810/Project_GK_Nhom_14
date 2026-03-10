@@ -1,6 +1,7 @@
 package vn.edu.ute.ui.classmgmt;
 
 import vn.edu.ute.model.ClassEntity;
+import vn.edu.ute.service.BranchService;
 import vn.edu.ute.service.ClassService;
 import vn.edu.ute.service.CourseService;
 import vn.edu.ute.service.RoomService;
@@ -17,17 +18,19 @@ public class ClassPanel extends JPanel {
     private final CourseService courseService;
     private final TeacherService teacherService;
     private final RoomService roomService;
+    private final BranchService branchService;
 
     private final ClassTableModel tableModel = new ClassTableModel();
     private final JTable table = new JTable(tableModel);
     private final JTextField txtSearch = UITheme.createSearchField("Nhập tên lớp, khóa học, giáo viên...", 25);
 
     public ClassPanel(ClassService classService, CourseService courseService, TeacherService teacherService,
-            RoomService roomService) {
+            RoomService roomService, BranchService branchService) {
         this.classService = classService;
         this.courseService = courseService;
         this.teacherService = teacherService;
         this.roomService = roomService;
+        this.branchService = branchService;
 
         setLayout(new BorderLayout(10, 10));
         UITheme.applyPanelStyle(this);
@@ -37,10 +40,10 @@ public class ClassPanel extends JPanel {
 
     private void buildUI() {
         JPanel toolbar = UITheme.createToolbar();
-        JButton btnAdd = UITheme.createSuccessButton("Mở Lớp Mới", "➕");
-        JButton btnEdit = UITheme.createPrimaryButton("Sửa Lớp", "✏️");
-        JButton btnDelete = UITheme.createDangerButton("Xóa", "🗑");
-        JButton btnRefresh = UITheme.createNeutralButton("Làm Mới", "🔄");
+        JButton btnAdd = UITheme.createSuccessButton("Mở Lớp Mới", "");
+        JButton btnEdit = UITheme.createPrimaryButton("Sửa Lớp", "");
+        JButton btnDelete = UITheme.createDangerButton("Xóa", "");
+        JButton btnRefresh = UITheme.createNeutralButton("Làm Mới", "");
 
         btnAdd.addActionListener(e -> onAdd());
         btnEdit.addActionListener(e -> onEdit());
@@ -86,7 +89,8 @@ public class ClassPanel extends JPanel {
         try {
             ClassFormDialog dlg = new ClassFormDialog((Frame) SwingUtilities.getWindowAncestor(this), "Mở Lớp Mới",
                     null,
-                    courseService.getActiveCourses(), teacherService.getActiveTeachers(), roomService.getActiveRooms());
+                    courseService.getActiveCourses(), teacherService.getActiveTeachers(),
+                    roomService.getActiveRooms(), branchService.getActiveBranches());
             dlg.setVisible(true);
             if (dlg.isSaved()) {
                 classService.createClass(dlg.getClassEntity());
@@ -106,7 +110,8 @@ public class ClassPanel extends JPanel {
         try {
             ClassFormDialog dlg = new ClassFormDialog((Frame) SwingUtilities.getWindowAncestor(this), "Sửa Lớp Học",
                     tableModel.getAt(row),
-                    courseService.getActiveCourses(), teacherService.getActiveTeachers(), roomService.getActiveRooms());
+                    courseService.getActiveCourses(), teacherService.getActiveTeachers(),
+                    roomService.getActiveRooms(), branchService.getActiveBranches());
             dlg.setVisible(true);
             if (dlg.isSaved()) {
                 classService.updateClass(dlg.getClassEntity());

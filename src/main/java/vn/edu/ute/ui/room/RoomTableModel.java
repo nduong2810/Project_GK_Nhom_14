@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class RoomTableModel extends AbstractTableModel {
-    private final String[] columns = {"ID", "Tên Phòng", "Sức Chứa", "Vị Trí", "Trạng Thái"};
+    private final String[] columns = { "ID", "Tên Phòng", "Sức Chứa", "Vị Trí", "Chi Nhánh", "Trạng Thái" };
     private List<Room> data = new ArrayList<>();
     private List<Room> filteredData = new ArrayList<>();
     private String filterKeyword = "";
@@ -32,7 +32,11 @@ public class RoomTableModel extends AbstractTableModel {
                         String idStr = String.valueOf(r.getRoomId());
                         String nameStr = r.getRoomName().toLowerCase();
                         String locStr = r.getLocation() != null ? r.getLocation().toLowerCase() : "";
-                        return idStr.contains(filterKeyword) || nameStr.contains(filterKeyword) || locStr.contains(filterKeyword);
+                        String branchStr = r.getBranch() != null ? r.getBranch().getBranchName().toLowerCase() : "";
+                        return idStr.contains(filterKeyword)
+                                || nameStr.contains(filterKeyword)
+                                || locStr.contains(filterKeyword)
+                                || branchStr.contains(filterKeyword);
                     })
                     .collect(Collectors.toList());
         }
@@ -40,24 +44,44 @@ public class RoomTableModel extends AbstractTableModel {
     }
 
     public Room getAt(int row) {
-        if (row < 0 || row >= filteredData.size()) return null;
+        if (row < 0 || row >= filteredData.size())
+            return null;
         return filteredData.get(row);
     }
 
-    @Override public int getRowCount() { return filteredData.size(); }
-    @Override public int getColumnCount() { return columns.length; }
-    @Override public String getColumnName(int column) { return columns[column]; }
+    @Override
+    public int getRowCount() {
+        return filteredData.size();
+    }
+
+    @Override
+    public int getColumnCount() {
+        return columns.length;
+    }
+
+    @Override
+    public String getColumnName(int column) {
+        return columns[column];
+    }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         Room r = filteredData.get(rowIndex);
         switch (columnIndex) {
-            case 0: return r.getRoomId();
-            case 1: return r.getRoomName();
-            case 2: return r.getCapacity();
-            case 3: return r.getLocation() != null ? r.getLocation() : "";
-            case 4: return r.getStatus() == Status.Active ? "Hoạt động" : "Ngưng hoạt động";
-            default: return "";
+            case 0:
+                return r.getRoomId();
+            case 1:
+                return r.getRoomName();
+            case 2:
+                return r.getCapacity();
+            case 3:
+                return r.getLocation() != null ? r.getLocation() : "";
+            case 4:
+                return r.getBranch() != null ? r.getBranch().getBranchName() : "—";
+            case 5:
+                return r.getStatus() == Status.Active ? "Hoạt động" : "Ngưng hoạt động";
+            default:
+                return "";
         }
     }
 }

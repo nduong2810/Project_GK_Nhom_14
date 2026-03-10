@@ -1,11 +1,28 @@
 package vn.edu.ute.ui;
 
 import vn.edu.ute.model.UserAccount;
-import vn.edu.ute.service.*;
+import vn.edu.ute.service.AttendanceService;
+import vn.edu.ute.service.BranchService;
+import vn.edu.ute.service.ClassService;
+import vn.edu.ute.service.CourseService;
+import vn.edu.ute.service.EnrollmentService;
+import vn.edu.ute.service.FinanceService;
+import vn.edu.ute.service.NotificationService;
+import vn.edu.ute.service.PromotionService;
+import vn.edu.ute.service.ResultService;
+import vn.edu.ute.service.RoomService;
+import vn.edu.ute.service.ScheduleService;
+import vn.edu.ute.service.StaffService;
+import vn.edu.ute.service.StudentService;
+import vn.edu.ute.service.TeacherService;
+import vn.edu.ute.service.UserAccountService;
 import vn.edu.ute.ui.attendance.AttendancePanel;
+import vn.edu.ute.ui.branch.BranchPanel;
 import vn.edu.ute.ui.classmgmt.ClassPanel;
 import vn.edu.ute.ui.course.CoursePanel;
 import vn.edu.ute.ui.finance.FinancePanel;
+import vn.edu.ute.ui.notification.NotificationPanel;
+import vn.edu.ute.ui.notification.NotificationViewPanel;
 import vn.edu.ute.ui.promotion.PromotionPanel;
 import vn.edu.ute.ui.result.GradeEntryPanel;
 import vn.edu.ute.ui.result.StudentGradePanel;
@@ -33,6 +50,8 @@ public class MainFrame extends JFrame {
     private ResultService resultService;
     private UserAccountService userAccountService;
     private PromotionService promotionService;
+    private BranchService branchService;
+    private NotificationService notificationService;
     private LoginView loginView;
 
     private UserAccount currentUser;
@@ -43,7 +62,7 @@ public class MainFrame extends JFrame {
             TeacherService teacherService, StudentService studentService, EnrollmentService enrollmentService,
             FinanceService financeService, ScheduleService scheduleService, AttendanceService attendanceService,
             StaffService staffService, UserAccountService userAccountService, ResultService resultService,
-            PromotionService promotionService,
+            PromotionService promotionService, BranchService branchService, NotificationService notificationService,
             LoginView loginView) {
         super("Hệ Thống Quản Lý Trung Tâm Ngoại Ngữ");
         this.roomService = roomService;
@@ -59,6 +78,8 @@ public class MainFrame extends JFrame {
         this.userAccountService = userAccountService;
         this.resultService = resultService;
         this.promotionService = promotionService;
+        this.branchService = branchService;
+        this.notificationService = notificationService;
         this.loginView = loginView;
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -165,7 +186,11 @@ public class MainFrame extends JFrame {
             tabbedPane.addTab("  Giáo viên  ", teacherPanel);
             tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Thêm/Sửa/Xóa Giáo viên");
 
-            RoomPanel roomPanel = new RoomPanel(roomService);
+            BranchPanel branchPanel = new BranchPanel(branchService);
+            tabbedPane.addTab("  Chi Nhánh  ", branchPanel);
+            tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Quản lý chi nhánh trung tâm");
+
+            RoomPanel roomPanel = new RoomPanel(roomService, branchService);
             tabbedPane.addTab("  Phòng học  ", roomPanel);
             tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Thêm/Sửa/Xóa Phòng học");
 
@@ -173,7 +198,8 @@ public class MainFrame extends JFrame {
             tabbedPane.addTab("  Khóa học  ", coursePanel);
             tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Thêm/Sửa/Xóa Khóa học");
 
-            ClassPanel classPanel = new ClassPanel(classService, courseService, teacherService, roomService);
+            ClassPanel classPanel = new ClassPanel(classService, courseService, teacherService, roomService,
+                    branchService);
             tabbedPane.addTab("  Lớp học  ", classPanel);
             tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Mở/Sửa/Xóa Lớp học");
 
@@ -192,6 +218,10 @@ public class MainFrame extends JFrame {
             CenterSchedulePanel schedulePanel = new CenterSchedulePanel(scheduleService);
             tabbedPane.addTab("  Lịch hoạt động  ", schedulePanel);
             tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Xem lịch hoạt động chung của trung tâm");
+
+            NotificationPanel notificationPanel = new NotificationPanel(notificationService, currentUser);
+            tabbedPane.addTab("  Thông Báo  ", notificationPanel);
+            tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Quản lý thông báo cho học viên, giáo viên");
 
         } else if ("Teacher".equalsIgnoreCase(role)) {
             CoursePanel coursePanel = new CoursePanel(courseService);
@@ -213,6 +243,11 @@ public class MainFrame extends JFrame {
                 tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Nhập điểm cho học viên các lớp bạn dạy");
             }
 
+            // Tab xem thông báo cho Teacher
+            NotificationViewPanel notifView = new NotificationViewPanel(notificationService, currentUser);
+            tabbedPane.addTab("  Thông Báo  ", notifView);
+            tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Xem thông báo từ trung tâm");
+
         } else if ("Student".equalsIgnoreCase(role)) {
             if (currentUser != null && currentUser.getStudent() != null) {
                 Long sid = currentUser.getStudent().getStudentId();
@@ -224,6 +259,11 @@ public class MainFrame extends JFrame {
                 tabbedPane.addTab("  Xem điểm  ", studentGradePanel);
                 tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Xem kết quả học tập của bạn");
             }
+
+            // Tab xem thông báo cho Student
+            NotificationViewPanel notifView = new NotificationViewPanel(notificationService, currentUser);
+            tabbedPane.addTab("  Thông Báo  ", notifView);
+            tabbedPane.setToolTipTextAt(tabbedPane.getTabCount() - 1, "Xem thông báo từ trung tâm");
         }
 
         revalidate();

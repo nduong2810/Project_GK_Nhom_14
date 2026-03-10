@@ -3,8 +3,6 @@ package vn.edu.ute;
 import vn.edu.ute.controller.LoginController;
 import vn.edu.ute.db.TransactionManager;
 import vn.edu.ute.repo.*;
-import vn.edu.ute.repo.jpa.JpaPromotionRepository;
-import vn.edu.ute.repo.jpa.JpaResultRepository;
 import vn.edu.ute.repo.jpa.*;
 import vn.edu.ute.service.*;
 import vn.edu.ute.ui.LoginView;
@@ -36,6 +34,8 @@ public class App {
         ClassRepository classRepo = new JpaClassRepository();
         ResultRepository resultRepo = new JpaResultRepository();
         PromotionRepository promotionRepo = new JpaPromotionRepository();
+        BranchRepository branchRepo = new JpaBranchRepository();
+        NotificationRepository notificationRepo = new JpaNotificationRepository();
 
         // 4. Khởi tạo các Services và tiêm Repositories + TX vào (Tầng nghiệp vụ)
         RoomService roomService = new RoomService(roomRepo, tx);
@@ -51,6 +51,8 @@ public class App {
         ResultService resultService = new ResultService(resultRepo, tx);
         EnrollmentService enrollmentService = new EnrollmentService(enrollmentRepo, tx);
         PromotionService promotionService = new PromotionService(promotionRepo, tx);
+        BranchService branchService = new BranchService(branchRepo, tx);
+        NotificationService notificationService = new NotificationService(notificationRepo, tx);
 
         // 5. Khởi chạy MainFrame trên luồng sự kiện của Swing
         SwingUtilities.invokeLater(() -> {
@@ -58,7 +60,7 @@ public class App {
             MainFrame mainFrame = new MainFrame(roomService, courseService, classService, teacherService,
                     studentService, enrollmentService,
                     financeService, scheduleService, attendanceService, staffService, userAccountService, resultService,
-                    promotionService,
+                    promotionService, branchService, notificationService,
                     loginView);
             new LoginController(loginView, userAccountRepo, mainFrame);
             loginView.setVisible(true);

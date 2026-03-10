@@ -1,6 +1,7 @@
 package vn.edu.ute.ui.room;
 
 import vn.edu.ute.model.Room;
+import vn.edu.ute.service.BranchService;
 import vn.edu.ute.service.RoomService;
 import vn.edu.ute.ui.UITheme;
 
@@ -11,12 +12,14 @@ import java.awt.*;
 
 public class RoomPanel extends JPanel {
     private final RoomService roomService;
+    private final BranchService branchService;
     private final RoomTableModel tableModel = new RoomTableModel();
     private final JTable table = new JTable(tableModel);
     private final JTextField txtSearch = UITheme.createSearchField("Nhập ID, tên phòng, vị trí...", 25);
 
-    public RoomPanel(RoomService roomService) {
+    public RoomPanel(RoomService roomService, BranchService branchService) {
         this.roomService = roomService;
+        this.branchService = branchService;
         setLayout(new BorderLayout(10, 10));
         UITheme.applyPanelStyle(this);
         buildUI();
@@ -72,16 +75,17 @@ public class RoomPanel extends JPanel {
     }
 
     private void onAdd() {
-        RoomFormDialog dlg = new RoomFormDialog((Frame) SwingUtilities.getWindowAncestor(this), "Thêm Phòng Học", null);
-        dlg.setVisible(true);
-        if (dlg.isSaved()) {
-            try {
+        try {
+            RoomFormDialog dlg = new RoomFormDialog((Frame) SwingUtilities.getWindowAncestor(this),
+                    "Thêm Phòng Học", null, branchService.getActiveBranches());
+            dlg.setVisible(true);
+            if (dlg.isSaved()) {
                 roomService.createRoom(dlg.getRoom());
                 loadData();
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Lỗi lưu dữ liệu: " + ex.getMessage(), "Lỗi",
-                        JOptionPane.ERROR_MESSAGE);
             }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage(), "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -91,18 +95,18 @@ public class RoomPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn một phòng học trong bảng để sửa.");
             return;
         }
-        Room selectedRoom = tableModel.getAt(selectedRow);
-        RoomFormDialog dlg = new RoomFormDialog((Frame) SwingUtilities.getWindowAncestor(this), "Sửa Phòng Học",
-                selectedRoom);
-        dlg.setVisible(true);
-        if (dlg.isSaved()) {
-            try {
+        try {
+            Room selectedRoom = tableModel.getAt(selectedRow);
+            RoomFormDialog dlg = new RoomFormDialog((Frame) SwingUtilities.getWindowAncestor(this),
+                    "Sửa Phòng Học", selectedRoom, branchService.getActiveBranches());
+            dlg.setVisible(true);
+            if (dlg.isSaved()) {
                 roomService.updateRoom(dlg.getRoom());
                 loadData();
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Lỗi cập nhật dữ liệu: " + ex.getMessage(), "Lỗi",
-                        JOptionPane.ERROR_MESSAGE);
             }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage(), "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 

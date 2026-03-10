@@ -11,11 +11,13 @@ public class JpaScheduleRepository implements ScheduleRepository {
     @Override
     public List<Schedule> findAll(EntityManager em) {
         return em.createQuery(
-                "SELECT s FROM Schedule s " +
+                "SELECT DISTINCT s FROM Schedule s " +
                         "JOIN FETCH s.classEntity ce " +
                         "JOIN FETCH ce.course " +
                         "LEFT JOIN FETCH ce.teacher " +
-                        "LEFT JOIN FETCH s.room " +
+                        "LEFT JOIN FETCH s.room r " +
+                        "LEFT JOIN FETCH r.branch " +
+                        "LEFT JOIN FETCH ce.branch " +
                         "ORDER BY s.studyDate ASC, s.startTime ASC",
                 Schedule.class)
                 .getResultList();
@@ -28,7 +30,9 @@ public class JpaScheduleRepository implements ScheduleRepository {
                         "JOIN FETCH s.classEntity ce " +
                         "JOIN FETCH ce.course " +
                         "JOIN FETCH ce.teacher t " +
-                        "LEFT JOIN FETCH s.room " +
+                        "LEFT JOIN FETCH s.room r " +
+                        "LEFT JOIN FETCH r.branch " +
+                        "LEFT JOIN FETCH ce.branch " +
                         "WHERE t.teacherId = :tid " +
                         "ORDER BY s.studyDate ASC, s.startTime ASC",
                 Schedule.class)
@@ -43,7 +47,9 @@ public class JpaScheduleRepository implements ScheduleRepository {
                         "JOIN FETCH s.classEntity ce " +
                         "JOIN FETCH ce.course " +
                         "LEFT JOIN FETCH ce.teacher " +
-                        "LEFT JOIN FETCH s.room " +
+                        "LEFT JOIN FETCH s.room r " +
+                        "LEFT JOIN FETCH r.branch " +
+                        "LEFT JOIN FETCH ce.branch " +
                         "JOIN ce.enrollments e " +
                         "WHERE e.student.studentId = :sid " +
                         "AND e.status = :enrolledStatus " +

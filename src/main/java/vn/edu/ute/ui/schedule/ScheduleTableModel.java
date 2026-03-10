@@ -25,9 +25,10 @@ public class ScheduleTableModel extends AbstractTableModel {
         this.showTeacher = showTeacher;
         if (showTeacher) {
             columns = new String[] { "Ngày học", "Giờ bắt đầu", "Giờ kết thúc", "Lớp", "Khóa học", "Giáo viên",
-                    "Phòng" };
+                    "Phòng", "Địa Chỉ Chi Nhánh" };
         } else {
-            columns = new String[] { "Ngày học", "Giờ bắt đầu", "Giờ kết thúc", "Lớp", "Khóa học", "Phòng" };
+            columns = new String[] { "Ngày học", "Giờ bắt đầu", "Giờ kết thúc", "Lớp", "Khóa học", "Phòng",
+                    "Địa Chỉ Chi Nhánh" };
         }
     }
 
@@ -57,12 +58,20 @@ public class ScheduleTableModel extends AbstractTableModel {
                                 : "";
                         String roomName = s.getRoom() != null ? s.getRoom().getRoomName() : "";
                         String dateStr = s.getStudyDate() != null ? s.getStudyDate().format(DATE_FMT) : "";
+                        String branchAddress = "";
+                        if (s.getRoom() != null && s.getRoom().getBranch() != null)
+                            branchAddress = s.getRoom().getBranch().getAddress() != null
+                                    ? s.getRoom().getBranch().getAddress() : "";
+                        else if (s.getClassEntity() != null && s.getClassEntity().getBranch() != null)
+                            branchAddress = s.getClassEntity().getBranch().getAddress() != null
+                                    ? s.getClassEntity().getBranch().getAddress() : "";
 
                         return className.toLowerCase().contains(lowerKeyword)
                                 || courseName.toLowerCase().contains(lowerKeyword)
                                 || teacherName.toLowerCase().contains(lowerKeyword)
                                 || roomName.toLowerCase().contains(lowerKeyword)
-                                || dateStr.contains(lowerKeyword);
+                                || dateStr.contains(lowerKeyword)
+                                || branchAddress.toLowerCase().contains(lowerKeyword);
                     })
                     .collect(Collectors.toList());
         }
@@ -93,8 +102,7 @@ public class ScheduleTableModel extends AbstractTableModel {
         Schedule s = filteredData.get(rowIndex);
 
         if (showTeacher) {
-            // Cột: Ngày học | Giờ bắt đầu | Giờ kết thúc | Lớp | Khóa học | Giáo viên |
-            // Phòng
+            // Cột: Ngày học | Giờ bắt đầu | Giờ kết thúc | Lớp | Khóa học | Giáo viên | Phòng | Chi Nhánh
             switch (columnIndex) {
                 case 0:
                     return s.getStudyDate() != null ? s.getStudyDate().format(DATE_FMT) : "";
@@ -114,11 +122,19 @@ public class ScheduleTableModel extends AbstractTableModel {
                             : "(Chưa phân công)";
                 case 6:
                     return s.getRoom() != null ? s.getRoom().getRoomName() : "(Chưa xếp phòng)";
+                case 7:
+                    if (s.getRoom() != null && s.getRoom().getBranch() != null)
+                        return s.getRoom().getBranch().getAddress() != null
+                                ? s.getRoom().getBranch().getAddress() : "(Chưa có địa chỉ)";
+                    if (s.getClassEntity() != null && s.getClassEntity().getBranch() != null)
+                        return s.getClassEntity().getBranch().getAddress() != null
+                                ? s.getClassEntity().getBranch().getAddress() : "(Chưa có địa chỉ)";
+                    return "(Chưa có chi nhánh)";
                 default:
                     return "";
             }
         } else {
-            // Cột: Ngày học | Giờ bắt đầu | Giờ kết thúc | Lớp | Khóa học | Phòng
+            // Cột: Ngày học | Giờ bắt đầu | Giờ kết thúc | Lớp | Khóa học | Phòng | Chi Nhánh
             switch (columnIndex) {
                 case 0:
                     return s.getStudyDate() != null ? s.getStudyDate().format(DATE_FMT) : "";
@@ -134,6 +150,14 @@ public class ScheduleTableModel extends AbstractTableModel {
                             : "";
                 case 5:
                     return s.getRoom() != null ? s.getRoom().getRoomName() : "(Chưa xếp phòng)";
+                case 6:
+                    if (s.getRoom() != null && s.getRoom().getBranch() != null)
+                        return s.getRoom().getBranch().getAddress() != null
+                                ? s.getRoom().getBranch().getAddress() : "(Chưa có địa chỉ)";
+                    if (s.getClassEntity() != null && s.getClassEntity().getBranch() != null)
+                        return s.getClassEntity().getBranch().getAddress() != null
+                                ? s.getClassEntity().getBranch().getAddress() : "(Chưa có địa chỉ)";
+                    return "(Chưa có chi nhánh)";
                 default:
                     return "";
             }
