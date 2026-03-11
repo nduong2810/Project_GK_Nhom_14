@@ -29,6 +29,7 @@ public class MainFrame extends JFrame {
             StaffService staffService, UserAccountService userAccountService,
             GradeEntryService gradeEntryService, StudentGradeService studentGradeService,
             PromotionService promotionService, BranchService branchService, NotificationService notificationService,
+            PlacementTestService placementTestService, CertificateService certificateService,
             LoginView loginView) {
         super("Hệ Thống Quản Lý Trung Tâm Ngoại Ngữ");
         this.loginView = loginView;
@@ -38,10 +39,10 @@ public class MainFrame extends JFrame {
             new AdminMenuBuilder(staffService, userAccountService, studentService, teacherService,
                     branchService, roomService, courseService, classService, enrollmentService,
                     invoiceService, paymentService, refundService, promotionService, scheduleService,
-                    notificationService),
+                    notificationService, placementTestService, certificateService),
             new StaffMenuBuilder(studentService, teacherService, branchService, roomService,
                     courseService, classService, enrollmentService, invoiceService, paymentService,
-                    refundService, promotionService, scheduleService, notificationService),
+                    refundService, promotionService, scheduleService, notificationService, placementTestService, certificateService),
             new TeacherMenuBuilder(courseService, scheduleService, attendanceService, gradeEntryService,
                     notificationService),
             new StudentMenuBuilder(scheduleService, studentGradeService, notificationService)

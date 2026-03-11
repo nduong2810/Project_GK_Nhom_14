@@ -36,6 +36,8 @@ public class App {
         PromotionRepository promotionRepo = new JpaPromotionRepository();
         BranchRepository branchRepo = new JpaBranchRepository();
         NotificationRepository notificationRepo = new JpaNotificationRepository();
+        PlacementTestRepository placementTestRepo = new JpaPlacementTestRepository();
+        CertificateRepository certificateRepo = new JpaCertificateRepository();
 
         // 4. Khởi tạo các Services và tiêm Repositories + TX vào (Tầng nghiệp vụ)
         RoomService roomService = new RoomService(roomRepo, tx);
@@ -51,6 +53,9 @@ public class App {
         PromotionService promotionService = new PromotionService(promotionRepo, tx);
         BranchService branchService = new BranchService(branchRepo, tx);
         NotificationService notificationService = new NotificationService(notificationRepo, tx);
+        PlacementTestService placementTestService = new PlacementTestService(placementTestRepo, tx);
+        CertificateService certificateService = new CertificateService(certificateRepo, tx);
+
 
         // SRP: FinanceService tách thành 3 service riêng biệt
         InvoiceService invoiceService = new InvoiceService(invoiceRepo, enrollmentRepo, promotionRepo, paymentRepo,
@@ -70,7 +75,7 @@ public class App {
                     invoiceService, paymentService, refundService,
                     scheduleService, attendanceService, staffService, userAccountService,
                     gradeEntryService, studentGradeService,
-                    promotionService, branchService, notificationService,
+                    promotionService, branchService, notificationService, placementTestService, certificateService,
                     loginView);
             // DIP: LoginController dùng UserAccountService thay vì UserAccountRepository
             new LoginController(loginView, userAccountService, mainFrame);

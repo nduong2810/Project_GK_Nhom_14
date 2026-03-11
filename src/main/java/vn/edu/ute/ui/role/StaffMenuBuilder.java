@@ -12,6 +12,8 @@ import vn.edu.ute.ui.notification.NotificationPanel;
 import vn.edu.ute.ui.promotion.PromotionPanel;
 import vn.edu.ute.ui.room.RoomPanel;
 import vn.edu.ute.ui.schedule.CenterSchedulePanel;
+import vn.edu.ute.ui.placementtest.PlacementTestPanel;
+import vn.edu.ute.ui.certificate.CertificatePanel;
 
 import javax.swing.*;
 
@@ -33,6 +35,8 @@ public class StaffMenuBuilder implements MenuBuilder {
     private final PromotionService promotionService;
     private final ScheduleService scheduleService;
     private final NotificationService notificationService;
+    private final PlacementTestService placementTestService;
+    private final CertificateService certificateService;
 
     public StaffMenuBuilder(StudentService studentService, TeacherService teacherService,
             BranchService branchService, RoomService roomService,
@@ -40,7 +44,7 @@ public class StaffMenuBuilder implements MenuBuilder {
             EnrollmentService enrollmentService, InvoiceService invoiceService,
             PaymentService paymentService, RefundService refundService,
             PromotionService promotionService, ScheduleService scheduleService,
-            NotificationService notificationService) {
+            NotificationService notificationService, PlacementTestService placementTestService, CertificateService certificateService) {
         this.studentService = studentService;
         this.teacherService = teacherService;
         this.branchService = branchService;
@@ -54,6 +58,8 @@ public class StaffMenuBuilder implements MenuBuilder {
         this.promotionService = promotionService;
         this.scheduleService = scheduleService;
         this.notificationService = notificationService;
+        this.placementTestService = placementTestService;
+        this.certificateService = certificateService;
     }
 
     @Override
@@ -71,9 +77,15 @@ public class StaffMenuBuilder implements MenuBuilder {
         addTab(tabbedPane, "  Lớp học  ",
                 new ClassPanel(classService, courseService, teacherService, roomService, branchService),
                 "Mở/Sửa/Xóa Lớp học");
+        addTab(tabbedPane, "  Thi Xếp Lớp  ",
+                new PlacementTestPanel(placementTestService, studentService),
+                "Quản lý kết quả thi đầu vào");
         addTab(tabbedPane, "  Ghi danh  ",
                 new EnrollmentPanel(enrollmentService, studentService, classService),
                 "Ghi danh học viên vào lớp học");
+        addTab(tabbedPane, "  Chứng Chỉ  ",
+                new CertificatePanel(certificateService, studentService, classService),
+                "Quản lý và cấp phát chứng chỉ");
         addTab(tabbedPane, "  Tài chính  ",
                 new FinancePanel(invoiceService, paymentService, refundService, promotionService),
                 "Hóa đơn / Thanh toán học phí");
