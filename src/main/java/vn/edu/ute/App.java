@@ -40,7 +40,6 @@ public class App {
         // 4. Khởi tạo các Services và tiêm Repositories + TX vào (Tầng nghiệp vụ)
         RoomService roomService = new RoomService(roomRepo, tx);
         CourseService courseService = new CourseService(courseRepo, tx);
-        FinanceService financeService = new FinanceService(invoiceRepo, paymentRepo, enrollmentRepo, promotionRepo, tx);
         StaffService staffService = new StaffService(staffRepo, tx);
         ScheduleService scheduleService = new ScheduleService(scheduleRepo, tx);
         AttendanceService attendanceService = new AttendanceService(attendanceRepo, tx);
@@ -48,21 +47,33 @@ public class App {
         StudentService studentService = new StudentService(studentRepo, tx);
         ClassService classService = new ClassService(classRepo, tx);
         UserAccountService userAccountService = new UserAccountService(userAccountRepo, tx);
-        ResultService resultService = new ResultService(resultRepo, tx);
         EnrollmentService enrollmentService = new EnrollmentService(enrollmentRepo, tx);
         PromotionService promotionService = new PromotionService(promotionRepo, tx);
         BranchService branchService = new BranchService(branchRepo, tx);
         NotificationService notificationService = new NotificationService(notificationRepo, tx);
+
+        // SRP: FinanceService tách thành 3 service riêng biệt
+        InvoiceService invoiceService = new InvoiceService(invoiceRepo, enrollmentRepo, promotionRepo, paymentRepo,
+                promotionService, tx);
+        PaymentService paymentService = new PaymentService(paymentRepo, invoiceRepo, enrollmentRepo, tx);
+        RefundService refundService = new RefundService(invoiceRepo, paymentRepo, tx);
+
+        // SRP: ResultService tách thành 2 service riêng biệt
+        GradeEntryService gradeEntryService = new GradeEntryService(resultRepo, tx);
+        StudentGradeService studentGradeService = new StudentGradeService(resultRepo, tx);
 
         // 5. Khởi chạy MainFrame trên luồng sự kiện của Swing
         SwingUtilities.invokeLater(() -> {
             LoginView loginView = new LoginView();
             MainFrame mainFrame = new MainFrame(roomService, courseService, classService, teacherService,
                     studentService, enrollmentService,
-                    financeService, scheduleService, attendanceService, staffService, userAccountService, resultService,
+                    invoiceService, paymentService, refundService,
+                    scheduleService, attendanceService, staffService, userAccountService,
+                    gradeEntryService, studentGradeService,
                     promotionService, branchService, notificationService,
                     loginView);
-            new LoginController(loginView, userAccountRepo, mainFrame);
+            // DIP: LoginController dùng UserAccountService thay vì UserAccountRepository
+            new LoginController(loginView, userAccountService, mainFrame);
             loginView.setVisible(true);
         });
     }

@@ -1,6 +1,7 @@
 package vn.edu.ute.ui.result;
 
-import vn.edu.ute.service.ResultService;
+import vn.edu.ute.service.GradeEntryService;
+import vn.edu.ute.service.StudentGradeService;
 import vn.edu.ute.ui.UITheme;
 
 import javax.swing.*;
@@ -18,15 +19,16 @@ import java.util.stream.Collectors;
  */
 public class StudentGradePanel extends JPanel {
 
-    private final ResultService resultService;
+    private final StudentGradeService studentGradeService;
     private final Long studentId;
 
     private final StudentGradeTableModel tableModel = new StudentGradeTableModel();
+
     private final JTable table = new JTable(tableModel);
     private final JLabel lblSummary = new JLabel(" ");
 
-    public StudentGradePanel(ResultService resultService, Long studentId) {
-        this.resultService = resultService;
+    public StudentGradePanel(StudentGradeService studentGradeService, Long studentId) {
+        this.studentGradeService = studentGradeService;
         this.studentId = studentId;
         setLayout(new BorderLayout(10, 10));
         UITheme.applyPanelStyle(this);
@@ -80,7 +82,7 @@ public class StudentGradePanel extends JPanel {
 
     private void loadResults() {
         try {
-            List<ResultService.StudentGradeRow> rows = resultService.getStudentGrades(studentId);
+            List<StudentGradeService.StudentGradeRow> rows = studentGradeService.getStudentGrades(studentId);
             tableModel.setData(rows);
             updateSummary(rows);
         } catch (Exception ex) {
@@ -89,7 +91,7 @@ public class StudentGradePanel extends JPanel {
         }
     }
 
-    private void updateSummary(List<ResultService.StudentGradeRow> rows) {
+    private void updateSummary(List<StudentGradeService.StudentGradeRow> rows) {
         if (rows.isEmpty()) {
             lblSummary.setText("<html><i>Bạn chưa tham gia khóa học nào.</i></html>");
             return;
@@ -110,7 +112,7 @@ public class StudentGradePanel extends JPanel {
                 .collect(Collectors.partitioningBy(r -> r.score().doubleValue() >= 40, Collectors.counting()));
         long passed = passFailMap.getOrDefault(true, 0L);
         double passRate = passed * 100.0 / totalGraded;
-        String avgGrade = ResultService.calculateGrade(BigDecimal.valueOf(avg));
+        String avgGrade = GradeEntryService.calculateGrade(BigDecimal.valueOf(avg));
         lblSummary.setText(String.format(
                 "<html><b>Tổng số lớp:</b> %d &nbsp;|&nbsp; <b>Đã có điểm:</b> %d &nbsp;|&nbsp; "
                         + "<b>Điểm TB:</b> %.2f (%s) &nbsp;|&nbsp; "
@@ -148,9 +150,9 @@ public class StudentGradePanel extends JPanel {
 
     static class StudentGradeTableModel extends AbstractTableModel {
         private final String[] columns = { "STT", "Tên lớp", "Khóa học", "Điểm", "Xếp loại", "Nhận xét" };
-        private List<ResultService.StudentGradeRow> data = new ArrayList<>();
+        private List<StudentGradeService.StudentGradeRow> data = new ArrayList<>();
 
-        void setData(List<ResultService.StudentGradeRow> data) {
+        void setData(List<StudentGradeService.StudentGradeRow> data) {
             this.data = data;
             fireTableDataChanged();
         }
@@ -177,7 +179,7 @@ public class StudentGradePanel extends JPanel {
 
         @Override
         public Object getValueAt(int row, int col) {
-            ResultService.StudentGradeRow r = data.get(row);
+            StudentGradeService.StudentGradeRow r = data.get(row);
             return switch (col) {
                 case 0 -> row + 1;
                 case 1 -> r.className();

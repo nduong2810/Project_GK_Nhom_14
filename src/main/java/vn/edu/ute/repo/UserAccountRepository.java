@@ -7,9 +7,13 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserAccountRepository {
-    UserAccount findByUsername(String username); // Keep this for login
+    UserAccount findByUsername(EntityManager em, String username); // ISP: nhất quán dùng EntityManager
+
     List<UserAccount> findAll(EntityManager em);
+
     Optional<UserAccount> findById(EntityManager em, Long id);
+
     UserAccount save(EntityManager em, UserAccount userAccount);
+
     void deleteById(EntityManager em, Long id);
 }

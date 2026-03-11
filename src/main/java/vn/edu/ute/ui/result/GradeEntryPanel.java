@@ -3,7 +3,7 @@ package vn.edu.ute.ui.result;
 import vn.edu.ute.model.ClassEntity;
 import vn.edu.ute.model.Enrollment;
 import vn.edu.ute.model.Result;
-import vn.edu.ute.service.ResultService;
+import vn.edu.ute.service.GradeEntryService;
 import vn.edu.ute.ui.UITheme;
 
 import javax.swing.*;
@@ -22,15 +22,15 @@ import java.util.stream.Collectors;
  */
 public class GradeEntryPanel extends JPanel {
 
-    private final ResultService resultService;
+    private final GradeEntryService gradeEntryService;
     private final Long teacherId;
 
     private JComboBox<ClassItem> cmbClass;
     private final GradeTableModel tableModel = new GradeTableModel();
     private final JTable table = new JTable(tableModel);
 
-    public GradeEntryPanel(ResultService resultService, Long teacherId) {
-        this.resultService = resultService;
+    public GradeEntryPanel(GradeEntryService gradeEntryService, Long teacherId) {
+        this.gradeEntryService = gradeEntryService;
         this.teacherId = teacherId;
         setLayout(new BorderLayout(10, 10));
         UITheme.applyPanelStyle(this);
@@ -95,7 +95,7 @@ public class GradeEntryPanel extends JPanel {
 
     private void loadClasses() {
         try {
-            List<ClassEntity> classes = resultService.getOngoingClassesByTeacher(teacherId);
+            List<ClassEntity> classes = gradeEntryService.getOngoingClassesByTeacher(teacherId);
             cmbClass.removeAllItems();
             classes.stream()
                     .map(c -> new ClassItem(c.getClassId(),
@@ -118,8 +118,8 @@ public class GradeEntryPanel extends JPanel {
             return;
         }
         try {
-            List<Enrollment> enrollments = resultService.getEnrolledStudents(selected.classId());
-            Map<Long, Result> existingMap = resultService.getResultMap(selected.classId());
+            List<Enrollment> enrollments = gradeEntryService.getEnrolledStudents(selected.classId());
+            Map<Long, Result> existingMap = gradeEntryService.getResultMap(selected.classId());
             List<Object[]> rows = enrollments.stream()
                     .map(e -> {
                         Long sid = e.getStudent().getStudentId();
@@ -158,10 +158,10 @@ public class GradeEntryPanel extends JPanel {
             return;
         }
         try {
-            List<ResultService.ResultRecord> records = rows.stream()
-                    .map(row -> new ResultService.ResultRecord((Long) row[0], (BigDecimal) row[2], (String) row[4]))
+            List<GradeEntryService.ResultRecord> records = rows.stream()
+                    .map(row -> new GradeEntryService.ResultRecord((Long) row[0], (BigDecimal) row[2], (String) row[4]))
                     .collect(Collectors.toList());
-            resultService.saveResults(selected.classId(), records);
+            gradeEntryService.saveResults(selected.classId(), records);
             long savedCount = rows.stream().filter(r -> r[2] != null).count();
             JOptionPane.showMessageDialog(this,
                     "Lưu điểm thành công!\nĐã lưu: " + savedCount + "/" + rows.size() + " học viên.");
@@ -314,7 +314,7 @@ public class GradeEntryPanel extends JPanel {
                                 return;
                             }
                             r[2] = score;
-                            r[3] = ResultService.calculateGrade(score);
+                            r[3] = GradeEntryService.calculateGrade(score);
                         } catch (NumberFormatException ex) {
                             JOptionPane.showMessageDialog(null, "Vui lòng nhập số hợp lệ!", "Lỗi",
                                     JOptionPane.WARNING_MESSAGE);

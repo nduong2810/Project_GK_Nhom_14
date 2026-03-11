@@ -3,7 +3,6 @@ package vn.edu.ute.repo.jpa;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
-import vn.edu.ute.db.Jpa;
 import vn.edu.ute.model.UserAccount;
 import vn.edu.ute.repo.UserAccountRepository;
 
@@ -12,17 +11,17 @@ import java.util.Optional;
 
 public class JpaUserAccountRepository implements UserAccountRepository {
 
-    // This method is special for login, it should manage its own EntityManager
-    // because it's called outside of our TransactionManager pattern.
+    // ISP: nhất quán dùng EntityManager param giống các method khác
     @Override
-    public UserAccount findByUsername(String username) {
-        try (EntityManager em = Jpa.em()) {
+    public UserAccount findByUsername(EntityManager em, String username) {
+        try {
             TypedQuery<UserAccount> query = em.createQuery(
-                "SELECT u FROM UserAccount u " +
-                "LEFT JOIN FETCH u.staff " +
-                "LEFT JOIN FETCH u.teacher " +
-                "LEFT JOIN FETCH u.student " +
-                "WHERE u.username = :username", UserAccount.class);
+                    "SELECT u FROM UserAccount u " +
+                            "LEFT JOIN FETCH u.staff " +
+                            "LEFT JOIN FETCH u.teacher " +
+                            "LEFT JOIN FETCH u.student " +
+                            "WHERE u.username = :username",
+                    UserAccount.class);
             query.setParameter("username", username);
             return query.getSingleResult();
         } catch (NoResultException e) {
@@ -32,25 +31,26 @@ public class JpaUserAccountRepository implements UserAccountRepository {
 
     @Override
     public List<UserAccount> findAll(EntityManager em) {
-        // Use JOIN FETCH to eagerly load related entities and avoid LazyInitializationException
+        // Use JOIN FETCH to eagerly load related entities and avoid
+        // LazyInitializationException
         return em.createQuery(
-            "SELECT DISTINCT u FROM UserAccount u " +
-            "LEFT JOIN FETCH u.staff " +
-            "LEFT JOIN FETCH u.teacher " +
-            "LEFT JOIN FETCH u.student", 
-            UserAccount.class
-        ).getResultList();
+                "SELECT DISTINCT u FROM UserAccount u " +
+                        "LEFT JOIN FETCH u.staff " +
+                        "LEFT JOIN FETCH u.teacher " +
+                        "LEFT JOIN FETCH u.student",
+                UserAccount.class).getResultList();
     }
 
     @Override
     public Optional<UserAccount> findById(EntityManager em, Long id) {
         // Also use JOIN FETCH here for consistency when fetching a single account
         TypedQuery<UserAccount> query = em.createQuery(
-            "SELECT u FROM UserAccount u " +
-            "LEFT JOIN FETCH u.staff " +
-            "LEFT JOIN FETCH u.teacher " +
-            "LEFT JOIN FETCH u.student " +
-            "WHERE u.userId = :id", UserAccount.class);
+                "SELECT u FROM UserAccount u " +
+                        "LEFT JOIN FETCH u.staff " +
+                        "LEFT JOIN FETCH u.teacher " +
+                        "LEFT JOIN FETCH u.student " +
+                        "WHERE u.userId = :id",
+                UserAccount.class);
         query.setParameter("id", id);
         return query.getResultStream().findFirst();
     }

@@ -5,7 +5,7 @@ import vn.edu.ute.model.ClassEntity;
 import vn.edu.ute.model.Enrollment;
 import vn.edu.ute.model.Result;
 import vn.edu.ute.model.Student;
-import vn.edu.ute.repo.ResultRepository;
+import vn.edu.ute.repo.GradeEntryRepository;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
@@ -13,17 +13,39 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class ResultService {
+/**
+ * SRP: Chỉ chịu trách nhiệm cho Teacher nhập điểm.
+ * OCP: calculateGrade dùng data-driven approach + Stream API,
+ * dễ mở rộng thêm mức điểm mới mà không sửa logic.
+ */
+public class GradeEntryService {
 
-    private final ResultRepository resultRepo;
+    private final GradeEntryRepository resultRepo;
     private final TransactionManager tx;
 
-    public ResultService(ResultRepository resultRepo, TransactionManager tx) {
+    /**
+     * OCP: Danh sách GradeRule — có thể thêm/sửa rule mà KHÔNG sửa logic
+     * calculateGrade.
+     * Sắp xếp từ cao → thấp (threshold giảm dần).
+     */
+    private static final List<GradeRule> GRADE_RULES = List.of(
+            new GradeRule(90, "A+"),
+            new GradeRule(85, "A"),
+            new GradeRule(80, "B+"),
+            new GradeRule(70, "B"),
+            new GradeRule(65, "C+"),
+            new GradeRule(55, "C"),
+            new GradeRule(50, "D+"),
+            new GradeRule(40, "D"));
+
+    /** Record chứa threshold và grade label — OCP compliant */
+    private record GradeRule(double threshold, String grade) {
+    }
+
+    public GradeEntryService(GradeEntryRepository resultRepo, TransactionManager tx) {
         this.resultRepo = resultRepo;
         this.tx = tx;
     }
-
-    // ==================== TEACHER: Nhập điểm ====================
 
     /**
      * Lấy danh sách lớp Ongoing của giáo viên (chỉ cho phép nhập điểm lớp Ongoing).
@@ -32,7 +54,6 @@ public class ResultService {
     public List<ClassEntity> getOngoingClassesByTeacher(Long teacherId) throws Exception {
         return tx.runInTransaction(em -> {
             List<ClassEntity> allClasses = resultRepo.findClassesByTeacherId(em, teacherId);
-            // Stream: lọc chỉ lấy lớp Ongoing, sắp xếp theo tên lớp
             return allClasses.stream()
                     .filter(c -> c.getStatus() == ClassEntity.Status.Ongoing)
                     .sorted(Comparator.comparing(ClassEntity::getClassName))
@@ -74,12 +95,10 @@ public class ResultService {
      */
     public void saveResults(Long classId, List<ResultRecord> records) throws Exception {
         tx.runInTransaction(em -> {
-            // Lấy result đã có cho lớp → Map để lookup nhanh
             Map<Long, Result> existingMap = resultRepo.findResultsByClassId(em, classId)
                     .stream()
                     .collect(Collectors.toMap(r -> r.getStudent().getStudentId(), r -> r));
 
-            // Load ClassEntity và kiểm tra trạng thái
             ClassEntity classEntity = em.find(ClassEntity.class, classId);
             if (classEntity.getStatus() != ClassEntity.Status.Ongoing) {
                 throw new IllegalStateException(
@@ -88,19 +107,17 @@ public class ResultService {
 
             // Xử lý từng record bằng Stream forEach + lambda
             records.stream()
-                    .filter(record -> record.score() != null) // Chỉ lưu khi có điểm
+                    .filter(record -> record.score() != null)
                     .forEach(record -> {
                         String grade = calculateGrade(record.score());
                         Result existing = existingMap.get(record.studentId());
 
                         if (existing != null) {
-                            // Cập nhật record đã tồn tại
                             existing.setScore(record.score());
                             existing.setGrade(grade);
                             existing.setComment(record.comment());
                             em.merge(existing);
                         } else {
-                            // Tạo mới
                             Student student = em.find(Student.class, record.studentId());
                             Result result = new Result();
                             result.setStudent(student);
@@ -116,83 +133,22 @@ public class ResultService {
         });
     }
 
-    // ==================== STUDENT: Xem điểm ====================
+    // ==================== OCP: Grade Calculation ====================
 
     /**
-     * Lấy toàn bộ lớp mà học viên tham gia (có hoặc chưa có điểm).
-     * Dùng Stream: lấy enrollments → merge với results (nếu có) → tạo
-     * StudentGradeRow.
-     * Sắp xếp: lớp mới nhất lên trước.
-     */
-    public List<StudentGradeRow> getStudentGrades(Long studentId) throws Exception {
-        return tx.runInTransaction(em -> {
-            // 1. Lấy tất cả enrollment của học viên (mọi trạng thái)
-            List<Enrollment> enrollments = resultRepo.findEnrollmentsByStudentId(em, studentId);
-
-            // 2. Lấy tất cả result của học viên → Map<classId, Result> để lookup nhanh
-            Map<Long, Result> resultMap = resultRepo.findResultsByStudentId(em, studentId)
-                    .stream()
-                    .collect(Collectors.toMap(
-                            r -> r.getClassEntity().getClassId(),
-                            r -> r));
-
-            // 3. Stream: lọc bỏ lớp Cancelled, merge enrollment + result → StudentGradeRow
-            return enrollments.stream()
-                    .filter(e -> e.getClassEntity().getStatus() != ClassEntity.Status.Cancelled)
-                    .map(e -> {
-                        ClassEntity cls = e.getClassEntity();
-                        Result result = resultMap.get(cls.getClassId());
-                        return new StudentGradeRow(
-                                cls.getClassName(),
-                                cls.getCourse().getCourseName(),
-                                result != null ? result.getScore() : null,
-                                result != null && result.getGrade() != null ? result.getGrade() : "",
-                                result != null && result.getComment() != null ? result.getComment() : "",
-                                cls.getStatus().toString());
-                    })
-                    .sorted(Comparator.comparing(
-                            (StudentGradeRow r) -> r.classStatus().equals("Ongoing") ? 0 : 1)
-                            .thenComparing(StudentGradeRow::className))
-                    .collect(Collectors.toList());
-        });
-    }
-
-    /**
-     * Record chứa dữ liệu điểm cho học viên xem (bao gồm cả lớp chưa có điểm).
-     */
-    public record StudentGradeRow(
-            String className, String courseName,
-            BigDecimal score, String grade,
-            String comment, String classStatus) {
-    }
-
-    // ==================== UTILITIES ====================
-
-    /**
-     * Tính grade (xếp loại) từ điểm số theo thang điểm 100.
-     * Sử dụng pattern matching style với lambda-friendly approach.
+     * OCP: Tính grade (xếp loại) từ điểm số theo thang điểm 100.
+     * Dùng data-driven approach + Stream API:
+     * - Thêm/sửa mức điểm mới chỉ cần thay đổi GRADE_RULES, KHÔNG sửa logic.
      */
     public static String calculateGrade(BigDecimal score) {
         if (score == null)
             return "";
         double s = score.doubleValue();
-        if (s >= 90)
-            return "A+";
-        if (s >= 85)
-            return "A";
-        if (s >= 80)
-            return "B+";
-        if (s >= 70)
-            return "B";
-        if (s >= 65)
-            return "C+";
-        if (s >= 55)
-            return "C";
-        if (s >= 50)
-            return "D+";
-        if (s >= 40)
-            return "D";
-        return "F";
+        return GRADE_RULES.stream()
+                .filter(rule -> s >= rule.threshold())
+                .map(GradeRule::grade)
+                .findFirst()
+                .orElse("F");
     }
 
     /**

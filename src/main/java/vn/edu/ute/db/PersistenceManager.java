@@ -1,23 +1,23 @@
 package vn.edu.ute.db;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
 
+/**
+ * SRP: PersistenceManager giờ delegate hoàn toàn sang Jpa.getInstance()
+ * thay vì tự tạo EntityManagerFactory riêng (tránh duplicate logic).
+ *
+ * @deprecated Dùng Jpa.getInstance() hoặc EntityManagerProvider trực tiếp.
+ *             Giữ lại class này để backward-compatible với code cũ nếu có.
+ */
+@Deprecated
 public enum PersistenceManager {
     INSTANCE;
 
-    private final EntityManagerFactory emFactory;
-
-    PersistenceManager() {
-        emFactory = Persistence.createEntityManagerFactory("language-center-pu");
-    }
-
     public EntityManager getEntityManager() {
-        return emFactory.createEntityManager();
+        return Jpa.getInstance().createEntityManager();
     }
 
     public void close() {
-        emFactory.close();
+        Jpa.shutdown();
     }
 }

@@ -2,7 +2,7 @@ package vn.edu.ute.ui.finance;
 
 import vn.edu.ute.model.Enrollment;
 import vn.edu.ute.model.Promotion;
-import vn.edu.ute.service.FinanceService;
+import vn.edu.ute.service.InvoiceService;
 import vn.edu.ute.service.PromotionService;
 import vn.edu.ute.ui.UITheme;
 
@@ -13,12 +13,15 @@ import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * SRP: Dùng InvoiceService thay vì FinanceService.
+ */
 public class CreateInvoiceDialog extends JDialog {
 
-    private final FinanceService financeService;
+    private final InvoiceService invoiceService;
     private final PromotionService promotionService;
     private JComboBox<Enrollment> cboEnrollment;
-    private JComboBox<Object> cboPromotion; // Object để hỗ trợ item "Không áp dụng"
+    private JComboBox<Object> cboPromotion;
     private JLabel lblCourse;
     private JLabel lblFee;
     private JLabel lblDiscount;
@@ -28,9 +31,9 @@ public class CreateInvoiceDialog extends JDialog {
 
     private final NumberFormat currencyFmt = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
 
-    public CreateInvoiceDialog(Frame owner, FinanceService financeService, PromotionService promotionService) {
+    public CreateInvoiceDialog(Frame owner, InvoiceService invoiceService, PromotionService promotionService) {
         super(owner, "Tạo Hóa Đơn Mới", true);
-        this.financeService = financeService;
+        this.invoiceService = invoiceService;
         this.promotionService = promotionService;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         buildUI();
@@ -142,7 +145,7 @@ public class CreateInvoiceDialog extends JDialog {
         g.gridx = 1;
         lblDiscount = new JLabel("—");
         lblDiscount.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        lblDiscount.setForeground(new Color(220, 53, 69)); // Đỏ
+        lblDiscount.setForeground(new Color(220, 53, 69));
         form.add(lblDiscount, g);
 
         // Row: Thành tiền
@@ -153,7 +156,7 @@ public class CreateInvoiceDialog extends JDialog {
         g.gridx = 1;
         lblFinalAmount = new JLabel("—");
         lblFinalAmount.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        lblFinalAmount.setForeground(new Color(25, 135, 84)); // Xanh lá
+        lblFinalAmount.setForeground(new Color(25, 135, 84));
         form.add(lblFinalAmount, g);
 
         // Row: Ghi chú
@@ -182,7 +185,7 @@ public class CreateInvoiceDialog extends JDialog {
 
     private void loadEnrollments() {
         try {
-            List<Enrollment> enrollments = financeService.getEnrolledWithoutInvoice();
+            List<Enrollment> enrollments = invoiceService.getEnrolledWithoutInvoice();
             cboEnrollment.removeAllItems();
             enrollments.forEach(e -> cboEnrollment.addItem(e));
         } catch (Exception ex) {
@@ -259,7 +262,7 @@ public class CreateInvoiceDialog extends JDialog {
         }
 
         try {
-            financeService.createInvoice(selected, txtNote.getText().trim(), promotionId);
+            invoiceService.createInvoice(selected, txtNote.getText().trim(), promotionId);
             JOptionPane.showMessageDialog(this, "Tạo hóa đơn thành công!");
             saved = true;
             dispose();

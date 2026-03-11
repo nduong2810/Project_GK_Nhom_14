@@ -1,20 +1,26 @@
 package vn.edu.ute.controller;
 
 import vn.edu.ute.model.UserAccount;
-import vn.edu.ute.repo.UserAccountRepository;
+import vn.edu.ute.service.UserAccountService;
 import vn.edu.ute.ui.LoginView;
 import vn.edu.ute.ui.MainFrame;
 
 import javax.swing.*;
 
+/**
+ * SRP: LoginController chỉ chịu trách nhiệm điều phối UI đăng nhập.
+ *      Logic xác thực credentials được delegate sang UserAccountService.authenticate().
+ * DIP: LoginController phụ thuộc vào Service (tầng nghiệp vụ)
+ *      thay vì phụ thuộc trực tiếp vào Repository (tầng truy xuất dữ liệu).
+ */
 public class LoginController {
-    private LoginView loginView;
-    private UserAccountRepository userAccountRepository;
-    private MainFrame mainFrame;
+    private final LoginView loginView;
+    private final UserAccountService userAccountService;
+    private final MainFrame mainFrame;
 
-    public LoginController(LoginView loginView, UserAccountRepository userAccountRepository, MainFrame mainFrame) {
+    public LoginController(LoginView loginView, UserAccountService userAccountService, MainFrame mainFrame) {
         this.loginView = loginView;
-        this.userAccountRepository = userAccountRepository;
+        this.userAccountService = userAccountService;
         this.mainFrame = mainFrame;
 
         loginView.getLoginButton().addActionListener(e -> login());
@@ -24,14 +30,16 @@ public class LoginController {
         String username = loginView.getUsernameField().getText();
         String password = new String(loginView.getPasswordField().getPassword());
 
-        UserAccount user = userAccountRepository.findByUsername(username);
+        // SRP: Delegate xác thực sang Service — Controller không biết gì về passwordHash
+        UserAccount user = userAccountService.authenticate(username, password);
 
-        if (user != null && user.getPasswordHash().equals(password)) { // Note: This is not secure!
+        if (user != null) {
             loginView.setVisible(false);
             mainFrame.setUser(user);
             mainFrame.setVisible(true);
         } else {
-            JOptionPane.showMessageDialog(loginView, "Invalid username or password", "Login Failed", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(loginView, "Tên đăng nhập hoặc mật khẩu không đúng.", "Đăng nhập thất bại",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 }

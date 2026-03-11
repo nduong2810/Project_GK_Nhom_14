@@ -5,13 +5,29 @@ import vn.edu.ute.model.Notification;
 import vn.edu.ute.model.UserAccount;
 import vn.edu.ute.repo.NotificationRepository;
 
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class NotificationService {
 
     private final NotificationRepository notificationRepo;
     private final TransactionManager tx;
+
+    /**
+     * OCP: Mapping UserAccount.Role → Notification.TargetRole.
+     * Thêm role mới: chỉ cần thêm 1 entry vào Map này, KHÔNG sửa logic bên dưới.
+     */
+    private static final Map<UserAccount.Role, Notification.TargetRole> ROLE_TARGET_MAP;
+
+    static {
+        ROLE_TARGET_MAP = new EnumMap<>(UserAccount.Role.class);
+        ROLE_TARGET_MAP.put(UserAccount.Role.Student, Notification.TargetRole.Student);
+        ROLE_TARGET_MAP.put(UserAccount.Role.Teacher, Notification.TargetRole.Teacher);
+        ROLE_TARGET_MAP.put(UserAccount.Role.Staff,   Notification.TargetRole.Staff);
+        ROLE_TARGET_MAP.put(UserAccount.Role.Admin,   Notification.TargetRole.Staff);
+    }
 
     public NotificationService(NotificationRepository notificationRepo, TransactionManager tx) {
         this.notificationRepo = notificationRepo;
@@ -55,12 +71,11 @@ public class NotificationService {
      * Lấy tất cả thông báo (cho Admin/Staff quản lý).
      */
     public List<Notification> getAllNotifications() throws Exception {
-        return tx.runInTransaction(em -> notificationRepo.findAll(em));
+        return tx.runInTransaction(notificationRepo::findAll);
     }
 
     /**
      * Lấy thông báo dành cho một role cụ thể (dùng repo query).
-     * - Trả về thông báo có targetRole = 'All' HOẶC targetRole = role truyền vào.
      */
     public List<Notification> getNotificationsForRole(Notification.TargetRole role) throws Exception {
         return tx.runInTransaction(em -> notificationRepo.findByTargetRole(em, role));
@@ -68,22 +83,14 @@ public class NotificationService {
 
     /**
      * Lấy thông báo phù hợp với user hiện tại (dùng Stream API + lambda).
-     * - Xác định role từ UserAccount → mapping tương ứng sang
-     * Notification.TargetRole.
-     * - Lọc: targetRole = All HOẶC targetRole match role của user.
+     * OCP: Map lookup thay vì switch hardcoded — thêm role mới chỉ cần thêm entry vào ROLE_TARGET_MAP.
      */
     public List<Notification> getNotificationsForUser(UserAccount user) throws Exception {
-        // Map UserAccount.Role -> Notification.TargetRole
-        Notification.TargetRole userTargetRole = switch (user.getRole()) {
-            case Student -> Notification.TargetRole.Student;
-            case Teacher -> Notification.TargetRole.Teacher;
-            case Staff -> Notification.TargetRole.Staff;
-            case Admin -> Notification.TargetRole.Staff; // Admin xem thông báo Staff
-        };
+        Notification.TargetRole userTargetRole = ROLE_TARGET_MAP.getOrDefault(
+                user.getRole(), Notification.TargetRole.Staff);
 
-        List<Notification> all = tx.runInTransaction(em -> notificationRepo.findAll(em));
+        List<Notification> all = tx.runInTransaction(notificationRepo::findAll);
 
-        // Dùng Stream để lọc theo role
         return all.stream()
                 .filter(n -> n.getTargetRole() == Notification.TargetRole.All
                         || n.getTargetRole() == userTargetRole)

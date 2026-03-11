@@ -2,7 +2,7 @@ package vn.edu.ute.ui.finance;
 
 import vn.edu.ute.model.Invoice;
 import vn.edu.ute.model.Payment;
-import vn.edu.ute.service.FinanceService;
+import vn.edu.ute.service.PaymentService;
 import vn.edu.ute.ui.UITheme;
 
 import javax.swing.*;
@@ -11,9 +11,12 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.Locale;
 
+/**
+ * SRP: Dùng PaymentService thay vì FinanceService.
+ */
 public class RecordPaymentDialog extends JDialog {
 
-    private final FinanceService financeService;
+    private final PaymentService paymentService;
     private final Invoice invoice;
 
     private final JLabel lblStudent = new JLabel();
@@ -27,9 +30,9 @@ public class RecordPaymentDialog extends JDialog {
     private final NumberFormat currencyFmt = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
     private boolean saved = false;
 
-    public RecordPaymentDialog(Frame owner, FinanceService financeService, Invoice invoice) {
+    public RecordPaymentDialog(Frame owner, PaymentService paymentService, Invoice invoice) {
         super(owner, "Ghi Nhận Thanh Toán", true);
-        this.financeService = financeService;
+        this.paymentService = paymentService;
         this.invoice = invoice;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         buildUI();
@@ -152,7 +155,7 @@ public class RecordPaymentDialog extends JDialog {
         lblStudent.setText(invoice.getStudent() != null ? invoice.getStudent().getFullName() : "N/A");
         lblTotal.setText(currencyFmt.format(invoice.getTotalAmount()));
         try {
-            BigDecimal totalPaid = financeService.getTotalPaidForInvoice(invoice.getInvoiceId());
+            BigDecimal totalPaid = paymentService.getTotalPaidForInvoice(invoice.getInvoiceId());
             lblPaid.setText(currencyFmt.format(totalPaid));
             BigDecimal remaining = invoice.getTotalAmount().subtract(totalPaid);
             lblRemaining.setText(currencyFmt.format(remaining));
@@ -177,7 +180,7 @@ public class RecordPaymentDialog extends JDialog {
                 throw new IllegalArgumentException("Số tiền phải là số dương hợp lệ.");
             }
 
-            BigDecimal totalPaid = financeService.getTotalPaidForInvoice(invoice.getInvoiceId());
+            BigDecimal totalPaid = paymentService.getTotalPaidForInvoice(invoice.getInvoiceId());
             BigDecimal remaining = invoice.getTotalAmount().subtract(totalPaid);
             if (remaining.compareTo(BigDecimal.ZERO) < 0)
                 remaining = BigDecimal.ZERO;
@@ -195,7 +198,7 @@ public class RecordPaymentDialog extends JDialog {
             Payment.PaymentMethod method = (Payment.PaymentMethod) cboMethod.getSelectedItem();
             String refCode = txtRefCode.getText().trim().isEmpty() ? null : txtRefCode.getText().trim();
 
-            financeService.recordPayment(invoice.getInvoiceId(), null, amount, method, refCode);
+            paymentService.recordPayment(invoice.getInvoiceId(), null, amount, method, refCode);
             JOptionPane.showMessageDialog(this, "Thanh toán thành công!");
             saved = true;
             dispose();

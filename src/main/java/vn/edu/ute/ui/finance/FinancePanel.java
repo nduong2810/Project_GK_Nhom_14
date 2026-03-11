@@ -1,7 +1,9 @@
 package vn.edu.ute.ui.finance;
 
 import vn.edu.ute.model.Invoice;
-import vn.edu.ute.service.FinanceService;
+import vn.edu.ute.service.InvoiceService;
+import vn.edu.ute.service.PaymentService;
+import vn.edu.ute.service.RefundService;
 import vn.edu.ute.service.PromotionService;
 import vn.edu.ute.ui.UITheme;
 
@@ -13,9 +15,14 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.List;
 
+/**
+ * SRP: FinancePanel nhận 3 service riêng biệt thay vì 1 FinanceService.
+ */
 public class FinancePanel extends JPanel {
 
-    private final FinanceService financeService;
+    private final InvoiceService invoiceService;
+    private final PaymentService paymentService;
+    private final RefundService refundService;
     private final PromotionService promotionService;
     private final InvoiceTableModel invoiceTableModel = new InvoiceTableModel();
     private final PaymentTableModel paymentTableModel = new PaymentTableModel();
@@ -23,8 +30,11 @@ public class FinancePanel extends JPanel {
     private final JTable paymentTable = new JTable(paymentTableModel);
     private final JTextField txtSearch = UITheme.createSearchField("Nhập ID hoặc tên học viên...", 22);
 
-    public FinancePanel(FinanceService financeService, PromotionService promotionService) {
-        this.financeService = financeService;
+    public FinancePanel(InvoiceService invoiceService, PaymentService paymentService,
+            RefundService refundService, PromotionService promotionService) {
+        this.invoiceService = invoiceService;
+        this.paymentService = paymentService;
+        this.refundService = refundService;
         this.promotionService = promotionService;
         setLayout(new BorderLayout(10, 10));
         UITheme.applyPanelStyle(this);
@@ -119,9 +129,9 @@ public class FinancePanel extends JPanel {
 
     private void loadInvoices() {
         try {
-            List<Invoice> invoices = financeService.getAllInvoices();
+            List<Invoice> invoices = invoiceService.getAllInvoices();
             invoices.sort(Comparator.comparing(Invoice::getInvoiceId).reversed());
-            Map<Long, BigDecimal> paidMap = financeService.getAllPaidAmounts();
+            Map<Long, BigDecimal> paidMap = paymentService.getAllPaidAmounts();
             invoiceTableModel.setData(invoices, paidMap);
             paymentTableModel.setData(Collections.emptyList());
         } catch (Exception ex) {
@@ -139,7 +149,7 @@ public class FinancePanel extends JPanel {
         Invoice selectedInvoice = invoiceTableModel.getAt(selectedRow);
         if (selectedInvoice != null) {
             try {
-                paymentTableModel.setData(financeService.getPaymentsByInvoice(selectedInvoice.getInvoiceId()));
+                paymentTableModel.setData(paymentService.getPaymentsByInvoice(selectedInvoice.getInvoiceId()));
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Lỗi tải lịch sử thanh toán: " + ex.getMessage(), "Lỗi",
                         JOptionPane.ERROR_MESSAGE);
@@ -151,7 +161,7 @@ public class FinancePanel extends JPanel {
 
     private void onCreateInvoice() {
         CreateInvoiceDialog dlg = new CreateInvoiceDialog((Frame) SwingUtilities.getWindowAncestor(this),
-                financeService, promotionService);
+                invoiceService, promotionService);
         dlg.setVisible(true);
         if (dlg.isSaved()) {
             loadInvoices();
@@ -175,7 +185,7 @@ public class FinancePanel extends JPanel {
             return;
         }
         RecordPaymentDialog dlg = new RecordPaymentDialog((Frame) SwingUtilities.getWindowAncestor(this),
-                financeService, selectedInvoice);
+                paymentService, selectedInvoice);
         dlg.setVisible(true);
         if (dlg.isSaved()) {
             loadInvoices();
@@ -194,7 +204,7 @@ public class FinancePanel extends JPanel {
                 "Xác nhận hủy", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
             try {
-                financeService.cancelInvoice(selectedInvoice.getInvoiceId());
+                invoiceService.cancelInvoice(selectedInvoice.getInvoiceId());
                 JOptionPane.showMessageDialog(this, "Hủy hóa đơn thành công!");
                 loadInvoices();
             } catch (Exception ex) {
@@ -220,7 +230,7 @@ public class FinancePanel extends JPanel {
                 "Xác nhận hoàn tiền", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
         if (confirm == JOptionPane.YES_OPTION) {
             try {
-                java.math.BigDecimal refundAmount = financeService.refundInvoice(selectedInvoice.getInvoiceId());
+                java.math.BigDecimal refundAmount = refundService.refundInvoice(selectedInvoice.getInvoiceId());
                 JOptionPane.showMessageDialog(this,
                         String.format("Hoàn tiền thành công!\nSố tiền hoàn: %,.0f đ (70%%)", refundAmount),
                         "Thành công", JOptionPane.INFORMATION_MESSAGE);

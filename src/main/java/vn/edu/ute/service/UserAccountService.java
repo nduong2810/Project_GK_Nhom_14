@@ -18,7 +18,7 @@ public class UserAccountService {
 
     public List<UserAccount> getAllUserAccounts() {
         try {
-            return transactionManager.runInTransaction(em -> userAccountRepository.findAll(em));
+            return transactionManager.runInTransaction(userAccountRepository::findAll);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -49,5 +49,33 @@ public class UserAccountService {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * DIP: Tìm UserAccount theo username — dùng TransactionManager nhất quán.
+     * LoginController sẽ gọi method này thay vì dùng trực tiếp Repository.
+     */
+    public UserAccount findByUsername(String username) {
+        try {
+            return transactionManager.runInTransaction(em -> userAccountRepository.findByUsername(em, username));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * SRP: Logic xác thực credentials nằm trong Service, không nằm trong Controller.
+     * Controller chỉ cần gọi method này và nhận kết quả true/false.
+     *
+     * @param username Tên đăng nhập
+     * @param password Mật khẩu thô nhập từ UI
+     * @return UserAccount nếu xác thực thành công, null nếu thất bại
+     */
+    public UserAccount authenticate(String username, String password) {
+        UserAccount user = findByUsername(username);
+        if (user != null && user.getPasswordHash().equals(password)) {
+            return user;
+        }
+        return null;
     }
 }
