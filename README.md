@@ -1,7 +1,14 @@
 
 # Project_GK_Nhom_14
 # Hệ Thống Quản Lý Trung Tâm Ngoại Ngữ
+Nhóm sinh viên thực hiện:
 
+Bùi Phúc Nhân - 23110278
+
+Bùi Nhật Dương - 23110198
+
+Huỳnh Ngọc Tài - 23110305
+## Giới thiệu dự án
 Đây là một dự án ứng dụng Desktop được xây dựng bằng Java Swing, mô phỏng hệ thống quản lý cho một trung tâm ngoại ngữ. Ứng dụng cho phép quản lý đa vai trò bao gồm Quản trị viên (Admin), Nhân viên (Staff), Giáo viên (Teacher), và Học viên (Student), mỗi vai trò có những chức năng và quyền hạn riêng biệt.
 
 ## 🌟 Tính Năng Chính
