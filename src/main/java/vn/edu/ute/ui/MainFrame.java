@@ -9,9 +9,15 @@ import java.awt.*;
 import java.util.List;
 
 /**
- * OCP + SRP: MainFrame không còn chứa logic xây dựng menu theo role.
- * Thay vào đó, nó nhận danh sách MenuBuilder và delegate sang builder phù hợp.
- * Thêm role mới: chỉ cần tạo MenuBuilder mới, KHÔNG sửa MainFrame.
+ * Lớp MainFrame là cửa sổ chính của ứng dụng sau khi người dùng đăng nhập thành công.
+ *
+ * OCP (Open/Closed Principle) + SRP (Single Responsibility Principle):
+ * MainFrame không còn chứa logic cứng để xây dựng menu cho từng vai trò (role).
+ * Thay vào đó, nó nhận một danh sách các đối tượng `MenuBuilder` và ủy quyền việc xây dựng menu
+ * cho builder phù hợp với vai trò của người dùng.
+ *
+ * Lợi ích: Khi cần thêm một vai trò mới (ví dụ: "Phụ huynh"), chúng ta chỉ cần tạo một lớp
+ * `ParentMenuBuilder` mới và thêm nó vào danh sách `menuBuilders` mà không cần phải sửa đổi mã nguồn của MainFrame.
  */
 public class MainFrame extends JFrame {
     private final JTabbedPane tabbedPane;
@@ -19,7 +25,7 @@ public class MainFrame extends JFrame {
     private final JLabel userInfoLabel;
     private final JButton logoutButton;
 
-    /** OCP: Danh sách MenuBuilder — dễ mở rộng thêm role mà không sửa class này. */
+    /** OCP: Danh sách các MenuBuilder. Dễ dàng mở rộng bằng cách thêm builder mới vào danh sách này. */
     private final List<MenuBuilder> menuBuilders;
 
     public MainFrame(RoomService roomService, CourseService courseService, ClassService classService,
@@ -34,7 +40,8 @@ public class MainFrame extends JFrame {
         super("Hệ Thống Quản Lý Trung Tâm Ngoại Ngữ");
         this.loginView = loginView;
 
-        // OCP: Khởi tạo các MenuBuilder — thêm role mới = thêm builder vào đây
+        // OCP: Khởi tạo danh sách các MenuBuilder. Mỗi builder chịu trách nhiệm cho một vai trò.
+        // Để thêm vai trò mới, chỉ cần tạo một lớp builder mới và thêm vào đây.
         this.menuBuilders = List.of(
             new AdminMenuBuilder(staffService, userAccountService, studentService, teacherService,
                     branchService, roomService, courseService, classService, enrollmentService,
@@ -52,7 +59,7 @@ public class MainFrame extends JFrame {
         setSize(1200, 800);
         setLocationRelativeTo(null);
 
-        // ===== Header Panel (Gradient) =====
+        // ===== Header Panel (Thanh tiêu đề với nền gradient) =====
         JPanel headerPanel = UITheme.createGradientHeader();
         headerPanel.setLayout(new BorderLayout());
         headerPanel.setPreferredSize(new Dimension(0, 52));
@@ -72,7 +79,7 @@ public class MainFrame extends JFrame {
         logoutButton = new JButton("Đăng xuất");
         logoutButton.setFont(new Font("Segoe UI", Font.BOLD, 11));
         logoutButton.setForeground(Color.WHITE);
-        logoutButton.setBackground(new Color(255, 255, 255, 30));
+        logoutButton.setBackground(new Color(255, 255, 255, 30)); // Nền trong suốt
         logoutButton.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(255, 255, 255, 80), 1, true),
                 BorderFactory.createEmptyBorder(4, 12, 4, 12)));
@@ -105,6 +112,10 @@ public class MainFrame extends JFrame {
         setContentPane(mainPanel);
     }
 
+    /**
+     * Thiết lập thông tin người dùng hiện tại và xây dựng menu tương ứng.
+     * @param user Đối tượng UserAccount của người dùng đã đăng nhập.
+     */
     public void setUser(UserAccount user) {
         String name = "Unknown";
         if (user.getStaff() != null) {
@@ -118,22 +129,28 @@ public class MainFrame extends JFrame {
         buildMenuForUser(user);
     }
 
+    /**
+     * Xử lý logic đăng xuất.
+     */
     private void logout() {
         this.setVisible(false);
         loginView.setVisible(true);
     }
 
     /**
-     * OCP: Tìm MenuBuilder phù hợp và delegate việc xây dựng menu.
-     * Không cần if/else theo role — chỉ cần thêm builder mới vào danh sách.
+     * OCP: Tìm MenuBuilder phù hợp với vai trò của người dùng và ủy quyền việc xây dựng menu.
+     * Phương thức này không cần câu lệnh if/else hay switch/case để kiểm tra vai trò,
+     * giúp cho việc thêm vai trò mới trở nên dễ dàng.
+     * @param user Người dùng hiện tại.
      */
     private void buildMenuForUser(UserAccount user) {
-        tabbedPane.removeAll();
+        tabbedPane.removeAll(); // Xóa các tab cũ
+        // Dùng Stream API để tìm builder đầu tiên hỗ trợ vai trò của người dùng
         menuBuilders.stream()
                 .filter(builder -> builder.supports(user.getRole()))
                 .findFirst()
-                .ifPresent(builder -> builder.buildMenu(tabbedPane, user));
-        revalidate();
-        repaint();
+                .ifPresent(builder -> builder.buildMenu(tabbedPane, user)); // Nếu tìm thấy, gọi buildMenu
+        revalidate(); // Cập nhật lại layout
+        repaint();    // Vẽ lại giao diện
     }
 }

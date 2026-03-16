@@ -7,6 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Lớp `EnrollmentTableModel` là mô hình dữ liệu cho JTable hiển thị thông tin ghi danh.
+ */
 public class EnrollmentTableModel extends AbstractTableModel {
     private final String[] columns = {"ID", "Tên Học Viên", "Lớp Học", "Khóa Học", "Ngày Ghi Danh", "Trạng Thái"};
     private List<Enrollment> data = new ArrayList<>();
@@ -14,16 +17,25 @@ public class EnrollmentTableModel extends AbstractTableModel {
     private String filterKeyword = "";
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
+    /**
+     * Cập nhật dữ liệu cho model.
+     */
     public void setData(List<Enrollment> data) {
         this.data = data;
         applyFilter();
     }
 
+    /**
+     * Thiết lập từ khóa lọc.
+     */
     public void setFilter(String keyword) {
         this.filterKeyword = keyword != null ? keyword.trim().toLowerCase() : "";
         applyFilter();
     }
 
+    /**
+     * Áp dụng bộ lọc.
+     */
     private void applyFilter() {
         if (filterKeyword.isEmpty()) {
             filteredData = new ArrayList<>(data);
@@ -39,6 +51,9 @@ public class EnrollmentTableModel extends AbstractTableModel {
         fireTableDataChanged();
     }
 
+    /**
+     * Lấy bản ghi ghi danh tại một hàng.
+     */
     public Enrollment getAt(int row) {
         if (row < 0 || row >= filteredData.size()) return null;
         return filteredData.get(row);

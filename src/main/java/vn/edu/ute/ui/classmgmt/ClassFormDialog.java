@@ -14,7 +14,11 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
+/**
+ * Lớp `ClassFormDialog` tạo hộp thoại để thêm hoặc sửa thông tin lớp học.
+ */
 public class ClassFormDialog extends JDialog {
+    // Các thành phần UI
     private final JTextField txtName = new JTextField(20);
     private final JComboBox<Course> cboCourse = new JComboBox<>();
     private final JComboBox<Teacher> cboTeacher = new JComboBox<>();
@@ -34,41 +38,37 @@ public class ClassFormDialog extends JDialog {
         super(owner, title, true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
-        for (Course c : courses)
-            cboCourse.addItem(c);
-        cboTeacher.addItem(null);
-        for (Teacher t : teachers)
-            cboTeacher.addItem(t);
-        cboRoom.addItem(null);
-        for (Room r : rooms)
-            cboRoom.addItem(r);
-        cboBranch.addItem(null);
+        // Nạp dữ liệu vào các ComboBox
+        courses.forEach(cboCourse::addItem);
+        cboTeacher.addItem(null); // Cho phép không chọn giáo viên
+        teachers.forEach(cboTeacher::addItem);
+        cboRoom.addItem(null); // Cho phép không chọn phòng
+        rooms.forEach(cboRoom::addItem);
+        cboBranch.addItem(null); // Cho phép không chọn chi nhánh
         branches.forEach(cboBranch::addItem);
 
         setupComboBoxRenderers();
         buildUI();
 
+        // Nếu là chế độ sửa, điền dữ liệu
         if (existing != null) {
+            this.classEntity = existing;
             txtName.setText(existing.getClassName());
             txtStartDate.setText(existing.getStartDate() != null ? existing.getStartDate().format(dateFormatter) : "");
             txtEndDate.setText(existing.getEndDate() != null ? existing.getEndDate().format(dateFormatter) : "");
             txtMaxStudent.setText(String.valueOf(existing.getMaxStudent()));
             cboStatus.setSelectedItem(existing.getStatus());
-            if (existing.getCourse() != null)
-                setComboSelection(cboCourse, existing.getCourse().getCourseId());
-            if (existing.getTeacher() != null)
-                setComboSelection(cboTeacher, existing.getTeacher().getTeacherId());
-            if (existing.getRoom() != null)
-                setComboSelection(cboRoom, existing.getRoom().getRoomId());
-            // Set selected branch dùng Stream
+            if (existing.getCourse() != null) setComboSelection(cboCourse, existing.getCourse().getCourseId());
+            if (existing.getTeacher() != null) setComboSelection(cboTeacher, existing.getTeacher().getTeacherId());
+            if (existing.getRoom() != null) setComboSelection(cboRoom, existing.getRoom().getRoomId());
             if (existing.getBranch() != null) {
                 branches.stream()
                         .filter(b -> b.getBranchId().equals(existing.getBranch().getBranchId()))
                         .findFirst()
                         .ifPresent(cboBranch::setSelectedItem);
             }
-            this.classEntity = existing;
         } else {
+            // Chế độ thêm mới
             this.classEntity = new ClassEntity();
             txtStartDate.setText(LocalDate.now().format(dateFormatter));
             cboStatus.setSelectedItem(ClassEntity.Status.Planned);
@@ -78,81 +78,59 @@ public class ClassFormDialog extends JDialog {
         setLocationRelativeTo(owner);
     }
 
+    /**
+     * Tùy chỉnh cách hiển thị cho các ComboBox.
+     */
     private void setupComboBoxRenderers() {
         cboCourse.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
-                    boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value instanceof Course)
-                    setText(((Course) value).getCourseName());
+            public Component getListCellRendererComponent(JList<?> l, Object v, int i, boolean s, boolean f) {
+                super.getListCellRendererComponent(l, v, i, s, f);
+                if (v instanceof Course c) setText(c.getCourseName());
                 return this;
             }
         });
         cboTeacher.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
-                    boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value instanceof Teacher t)
-                    setText(t.getFullName() + (t.getSpecialty() != null ? " - " + t.getSpecialty() : ""));
-                else if (value == null)
-                    setText("-- Chưa phân công --");
+            public Component getListCellRendererComponent(JList<?> l, Object v, int i, boolean s, boolean f) {
+                super.getListCellRendererComponent(l, v, i, s, f);
+                if (v instanceof Teacher t) setText(t.getFullName());
+                else if (v == null) setText("-- Chưa phân công --");
                 return this;
             }
         });
         cboRoom.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
-                    boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value instanceof Room r)
-                    setText(r.getRoomName() + " (Sức chứa: " + r.getCapacity() + ")");
-                else if (value == null)
-                    setText("-- Chưa xếp phòng --");
+            public Component getListCellRendererComponent(JList<?> l, Object v, int i, boolean s, boolean f) {
+                super.getListCellRendererComponent(l, v, i, s, f);
+                if (v instanceof Room r) setText(r.getRoomName() + " (Sức chứa: " + r.getCapacity() + ")");
+                else if (v == null) setText("-- Chưa xếp phòng --");
                 return this;
             }
         });
-        // Branch renderer dùng lambda
         cboBranch.setRenderer((list, value, index, isSelected, cellHasFocus) -> {
             JLabel label = new JLabel();
-            label.setFont(UITheme.FONT_BODY);
-            label.setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
-            if (value instanceof Branch b) {
-                label.setText(b.getBranchName());
-            } else {
-                label.setText("-- Chưa chọn chi nhánh --");
-            }
-            if (isSelected) {
-                label.setBackground(list.getSelectionBackground());
-                label.setForeground(list.getSelectionForeground());
-                label.setOpaque(true);
-            }
+            if (value instanceof Branch b) label.setText(b.getBranchName());
+            else label.setText("-- Chưa chọn chi nhánh --");
+            // ... (phần style có thể thêm vào)
             return label;
         });
     }
 
+    /**
+     * Tiện ích để chọn một item trong ComboBox dựa trên ID.
+     */
     private void setComboSelection(JComboBox<?> combo, Long idTarget) {
         for (int i = 0; i < combo.getItemCount(); i++) {
             Object item = combo.getItemAt(i);
-            if (item instanceof Course && ((Course) item).getCourseId().equals(idTarget)) {
-                combo.setSelectedIndex(i);
-                return;
-            }
-            if (item instanceof Teacher && ((Teacher) item).getTeacherId().equals(idTarget)) {
-                combo.setSelectedIndex(i);
-                return;
-            }
-            if (item instanceof Room && ((Room) item).getRoomId().equals(idTarget)) {
-                combo.setSelectedIndex(i);
-                return;
-            }
+            if (item instanceof Course c && c.getCourseId().equals(idTarget)) { combo.setSelectedIndex(i); return; }
+            if (item instanceof Teacher t && t.getTeacherId().equals(idTarget)) { combo.setSelectedIndex(i); return; }
+            if (item instanceof Room r && r.getRoomId().equals(idTarget)) { combo.setSelectedIndex(i); return; }
         }
     }
 
+    /**
+     * Xây dựng giao diện người dùng.
+     */
     private void buildUI() {
         UITheme.styleDialog(this);
-
         JPanel form = new JPanel(new GridBagLayout());
         form.setOpaque(false);
         GridBagConstraints g = new GridBagConstraints();
@@ -161,65 +139,29 @@ public class ClassFormDialog extends JDialog {
         g.fill = GridBagConstraints.HORIZONTAL;
 
         int r = 0;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Tên Lớp (*):"), g);
-        g.gridx = 1;
-        form.add(txtName, g);
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Khóa Học (*):"), g);
-        g.gridx = 1;
-        form.add(cboCourse, g);
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Giáo Viên:"), g);
-        g.gridx = 1;
-        form.add(cboTeacher, g);
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Phòng Học:"), g);
-        g.gridx = 1;
-        form.add(cboRoom, g);
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Chi Nhánh:"), g);
-        g.gridx = 1;
-        cboBranch.setFont(UITheme.FONT_BODY);
-        form.add(cboBranch, g);
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Ngày Khai Giảng (*):"), g);
-        g.gridx = 1;
-        form.add(txtStartDate, g);
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Ngày Kết Thúc:"), g);
-        g.gridx = 1;
-        form.add(txtEndDate, g);
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Sĩ số tối đa:"), g);
-        g.gridx = 1;
-        form.add(txtMaxStudent, g);
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Trạng Thái:"), g);
-        g.gridx = 1;
-        form.add(cboStatus, g);
+        g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Tên Lớp (*):"), g);
+        g.gridx = 1; form.add(txtName, g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Khóa Học (*):"), g);
+        g.gridx = 1; form.add(cboCourse, g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Giáo Viên:"), g);
+        g.gridx = 1; form.add(cboTeacher, g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Phòng Học:"), g);
+        g.gridx = 1; form.add(cboRoom, g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Chi Nhánh:"), g);
+        g.gridx = 1; form.add(cboBranch, g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Ngày Khai Giảng (*):"), g);
+        g.gridx = 1; form.add(txtStartDate, g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Ngày Kết Thúc:"), g);
+        g.gridx = 1; form.add(txtEndDate, g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Sĩ số tối đa:"), g);
+        g.gridx = 1; form.add(txtMaxStudent, g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Trạng Thái:"), g);
+        g.gridx = 1; form.add(cboStatus, g);
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actions.setOpaque(false);
         actions.setBorder(BorderFactory.createEmptyBorder(12, 0, 0, 0));
-        JButton btnSave = UITheme.createPrimaryButton("Lưu", "");
+        JButton btnSave = UITheme.createPrimaryButton("Lưu", "💾");
         JButton btnCancel = UITheme.createOutlineButton("Hủy");
         btnSave.addActionListener(e -> onSave());
         btnCancel.addActionListener(e -> dispose());
@@ -230,13 +172,15 @@ public class ClassFormDialog extends JDialog {
         getContentPane().add(actions, BorderLayout.SOUTH);
     }
 
+    /**
+     * Xử lý sự kiện khi nhấn nút "Lưu".
+     */
     private void onSave() {
         try {
-            if (txtName.getText().trim().isEmpty())
-                throw new IllegalArgumentException("Vui lòng nhập tên lớp.");
+            // Kiểm tra dữ liệu
+            if (txtName.getText().trim().isEmpty()) throw new IllegalArgumentException("Vui lòng nhập tên lớp.");
             Course selectedCourse = (Course) cboCourse.getSelectedItem();
-            if (selectedCourse == null)
-                throw new IllegalArgumentException("Vui lòng chọn khóa học.");
+            if (selectedCourse == null) throw new IllegalArgumentException("Vui lòng chọn khóa học.");
             LocalDate startDate;
             try {
                 startDate = LocalDate.parse(txtStartDate.getText().trim(), dateFormatter);
@@ -247,8 +191,7 @@ public class ClassFormDialog extends JDialog {
             if (!txtEndDate.getText().trim().isEmpty()) {
                 try {
                     endDate = LocalDate.parse(txtEndDate.getText().trim(), dateFormatter);
-                    if (endDate.isBefore(startDate))
-                        throw new IllegalArgumentException("Ngày kết thúc phải sau ngày khai giảng.");
+                    if (endDate.isBefore(startDate)) throw new IllegalArgumentException("Ngày kết thúc phải sau ngày khai giảng.");
                 } catch (DateTimeParseException ex) {
                     throw new IllegalArgumentException("Ngày kết thúc không đúng định dạng dd/MM/yyyy");
                 }
@@ -256,12 +199,12 @@ public class ClassFormDialog extends JDialog {
             int maxStd;
             try {
                 maxStd = Integer.parseInt(txtMaxStudent.getText().trim());
-                if (maxStd < 0)
-                    throw new NumberFormatException();
+                if (maxStd < 0) throw new NumberFormatException();
             } catch (Exception e) {
                 throw new IllegalArgumentException("Sĩ số phải là số nguyên dương");
             }
 
+            // Cập nhật đối tượng `classEntity`
             classEntity.setClassName(txtName.getText().trim());
             classEntity.setCourse(selectedCourse);
             classEntity.setTeacher((Teacher) cboTeacher.getSelectedItem());
@@ -278,11 +221,6 @@ public class ClassFormDialog extends JDialog {
         }
     }
 
-    public boolean isSaved() {
-        return saved;
-    }
-
-    public ClassEntity getClassEntity() {
-        return classEntity;
-    }
+    public boolean isSaved() { return saved; }
+    public ClassEntity getClassEntity() { return classEntity; }
 }

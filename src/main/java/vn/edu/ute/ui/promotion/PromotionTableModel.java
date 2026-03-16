@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
+/**
+ * Lớp `PromotionTableModel` là mô hình dữ liệu cho JTable hiển thị thông tin khuyến mãi.
+ */
 public class PromotionTableModel extends AbstractTableModel {
     private final String[] columns = { "ID", "Tên Khuyến Mãi", "Loại Giảm", "Giá Trị", "Ngày BĐ", "Ngày KT",
             "Trạng Thái" };
@@ -17,18 +20,24 @@ public class PromotionTableModel extends AbstractTableModel {
     private String filterKeyword = "";
     private final NumberFormat currencyFmt = NumberFormat.getCurrencyInstance(Locale.of("vi", "VN"));
 
+    /**
+     * Cập nhật dữ liệu cho model.
+     */
     public void setData(List<Promotion> data) {
         this.data = data;
         applyFilter();
     }
 
+    /**
+     * Thiết lập từ khóa lọc.
+     */
     public void setFilter(String keyword) {
         this.filterKeyword = keyword != null ? keyword.trim().toLowerCase() : "";
         applyFilter();
     }
 
     /**
-     * Lọc danh sách khuyến mãi theo từ khóa (dùng Stream API).
+     * Áp dụng bộ lọc.
      */
     private void applyFilter() {
         if (filterKeyword.isEmpty()) {
@@ -45,51 +54,34 @@ public class PromotionTableModel extends AbstractTableModel {
         fireTableDataChanged();
     }
 
+    /**
+     * Lấy khuyến mãi tại một hàng.
+     */
     public Promotion getAt(int row) {
         return (row >= 0 && row < filteredData.size()) ? filteredData.get(row) : null;
     }
 
-    @Override
-    public int getRowCount() {
-        return filteredData.size();
-    }
-
-    @Override
-    public int getColumnCount() {
-        return columns.length;
-    }
-
-    @Override
-    public String getColumnName(int column) {
-        return columns[column];
-    }
+    @Override public int getRowCount() { return filteredData.size(); }
+    @Override public int getColumnCount() { return columns.length; }
+    @Override public String getColumnName(int column) { return columns[column]; }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         Promotion p = filteredData.get(rowIndex);
         switch (columnIndex) {
-            case 0:
-                return p.getPromotionId();
-            case 1:
-                return p.getPromoName();
-            case 2:
-                return p.getDiscountType() == Promotion.DiscountType.Percent
-                        ? "Phần trăm (%)"
-                        : "Số tiền cố định";
+            case 0: return p.getPromotionId();
+            case 1: return p.getPromoName();
+            case 2: return p.getDiscountType() == Promotion.DiscountType.Percent ? "Phần trăm (%)" : "Số tiền cố định";
             case 3:
                 if (p.getDiscountType() == Promotion.DiscountType.Percent) {
                     return p.getDiscountValue() + "%";
                 } else {
                     return currencyFmt.format(p.getDiscountValue());
                 }
-            case 4:
-                return p.getStartDate() != null ? p.getStartDate().toString() : "—";
-            case 5:
-                return p.getEndDate() != null ? p.getEndDate().toString() : "—";
-            case 6:
-                return p.getStatus() == Promotion.Status.Active ? "Active" : "Inactive";
-            default:
-                return "";
+            case 4: return p.getStartDate() != null ? p.getStartDate().toString() : "—";
+            case 5: return p.getEndDate() != null ? p.getEndDate().toString() : "—";
+            case 6: return p.getStatus() == Promotion.Status.Active ? "Hoạt động" : "Không hoạt động";
+            default: return "";
         }
     }
 }

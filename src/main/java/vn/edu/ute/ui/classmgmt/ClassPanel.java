@@ -13,13 +13,18 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 
+/**
+ * Lớp `ClassPanel` tạo giao diện quản lý các lớp học.
+ */
 public class ClassPanel extends JPanel {
+    // Các service cần thiết
     private final ClassService classService;
     private final CourseService courseService;
     private final TeacherService teacherService;
     private final RoomService roomService;
     private final BranchService branchService;
 
+    // Các thành phần UI
     private final ClassTableModel tableModel = new ClassTableModel();
     private final JTable table = new JTable(tableModel);
     private final JTextField txtSearch = UITheme.createSearchField("Nhập tên lớp, khóa học, giáo viên...", 25);
@@ -38,12 +43,15 @@ public class ClassPanel extends JPanel {
         loadData();
     }
 
+    /**
+     * Xây dựng giao diện người dùng.
+     */
     private void buildUI() {
         JPanel toolbar = UITheme.createToolbar();
-        JButton btnAdd = UITheme.createSuccessButton("Mở Lớp Mới", "");
-        JButton btnEdit = UITheme.createPrimaryButton("Sửa Lớp", "");
-        JButton btnDelete = UITheme.createDangerButton("Xóa", "");
-        JButton btnRefresh = UITheme.createNeutralButton("Làm Mới", "");
+        JButton btnAdd = UITheme.createSuccessButton("Mở Lớp Mới", "➕");
+        JButton btnEdit = UITheme.createPrimaryButton("Sửa Lớp", "✏️");
+        JButton btnDelete = UITheme.createDangerButton("Xóa", "🗑");
+        JButton btnRefresh = UITheme.createNeutralButton("Làm Mới", "🔄");
 
         btnAdd.addActionListener(e -> onAdd());
         btnEdit.addActionListener(e -> onEdit());
@@ -55,28 +63,31 @@ public class ClassPanel extends JPanel {
         toolbar.add(btnDelete);
         toolbar.add(btnRefresh);
 
-        JPanel searchPanel = UITheme.createSearchPanel(txtSearch);
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        searchPanel.setOpaque(false);
+        searchPanel.add(new JLabel("Tìm kiếm:"));
+        searchPanel.add(txtSearch);
 
         txtSearch.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) {
-                tableModel.setFilter(txtSearch.getText());
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                tableModel.setFilter(txtSearch.getText());
-            }
-
-            public void changedUpdate(DocumentEvent e) {
-                tableModel.setFilter(txtSearch.getText());
-            }
+            public void insertUpdate(DocumentEvent e) { tableModel.setFilter(txtSearch.getText()); }
+            public void removeUpdate(DocumentEvent e) { tableModel.setFilter(txtSearch.getText()); }
+            public void changedUpdate(DocumentEvent e) { tableModel.setFilter(txtSearch.getText()); }
         });
 
-        add(UITheme.createTopPanel(toolbar, searchPanel), BorderLayout.NORTH);
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setOpaque(false);
+        topPanel.add(toolbar, BorderLayout.WEST);
+        topPanel.add(searchPanel, BorderLayout.EAST);
+
+        add(topPanel, BorderLayout.NORTH);
 
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         add(UITheme.createStyledScrollPane(table), BorderLayout.CENTER);
     }
 
+    /**
+     * Tải dữ liệu lớp học bất đồng bộ.
+     */
     private void loadData() {
         new SwingWorker<java.util.List<ClassEntity>, Void>() {
             @Override
@@ -96,8 +107,12 @@ public class ClassPanel extends JPanel {
         }.execute();
     }
 
+    /**
+     * Xử lý sự kiện thêm mới lớp học.
+     */
     private void onAdd() {
         try {
+            // Tải trước dữ liệu cần thiết cho các ComboBox trong dialog
             ClassFormDialog dlg = new ClassFormDialog((Frame) SwingUtilities.getWindowAncestor(this), "Mở Lớp Mới",
                     null,
                     courseService.getActiveCourses(), teacherService.getActiveTeachers(),
@@ -112,6 +127,9 @@ public class ClassPanel extends JPanel {
         }
     }
 
+    /**
+     * Xử lý sự kiện sửa lớp học.
+     */
     private void onEdit() {
         int row = table.getSelectedRow();
         if (row < 0) {
@@ -133,6 +151,9 @@ public class ClassPanel extends JPanel {
         }
     }
 
+    /**
+     * Xử lý sự kiện xóa lớp học.
+     */
     private void onDelete() {
         int row = table.getSelectedRow();
         if (row < 0) {

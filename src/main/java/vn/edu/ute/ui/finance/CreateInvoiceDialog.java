@@ -14,7 +14,8 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * SRP: Dùng InvoiceService thay vì FinanceService.
+ * Lớp `CreateInvoiceDialog` tạo hộp thoại để tạo hóa đơn mới cho một lần ghi danh.
+ * SRP: Dialog này sử dụng `InvoiceService` và `PromotionService` thay vì một `FinanceService` lớn.
  */
 public class CreateInvoiceDialog extends JDialog {
 
@@ -43,6 +44,9 @@ public class CreateInvoiceDialog extends JDialog {
         setLocationRelativeTo(owner);
     }
 
+    /**
+     * Xây dựng giao diện người dùng.
+     */
     private void buildUI() {
         UITheme.styleDialog(this);
 
@@ -55,124 +59,74 @@ public class CreateInvoiceDialog extends JDialog {
 
         int r = 0;
 
-        // Row: Học viên - Khóa học
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Học viên - Khóa học (*):"), g);
+        // ComboBox chọn Ghi danh
+        g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Học viên - Lớp học (*):"), g);
         g.gridx = 1;
         cboEnrollment = new JComboBox<>();
         cboEnrollment.setPreferredSize(new Dimension(350, UITheme.FIELD_HEIGHT));
         cboEnrollment.setFont(UITheme.FONT_BODY);
-        cboEnrollment.setRenderer((list, value, index, isSelected, cellHasFocus) -> {
-            JLabel label = new JLabel();
-            label.setFont(UITheme.FONT_BODY);
-            label.setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
-            if (value instanceof Enrollment en) {
-                String studentName = en.getStudent() != null ? en.getStudent().getFullName() : "N/A";
-                String className = en.getClassEntity() != null ? en.getClassEntity().getClassName() : "N/A";
-                String courseName = en.getClassEntity() != null && en.getClassEntity().getCourse() != null
-                        ? en.getClassEntity().getCourse().getCourseName()
-                        : "";
-                label.setText(studentName + " — " + className + " (" + courseName + ")");
+        cboEnrollment.setRenderer(new DefaultListCellRenderer() { // Tùy chỉnh hiển thị
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof Enrollment en) {
+                    String studentName = en.getStudent() != null ? en.getStudent().getFullName() : "N/A";
+                    String className = en.getClassEntity() != null ? en.getClassEntity().getClassName() : "N/A";
+                    setText(studentName + " — " + className);
+                }
+                return this;
             }
-            if (isSelected) {
-                label.setBackground(list.getSelectionBackground());
-                label.setForeground(list.getSelectionForeground());
-                label.setOpaque(true);
-            }
-            return label;
         });
         cboEnrollment.addActionListener(e -> recalculate());
         form.add(cboEnrollment, g);
 
-        // Row: Khóa học
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Khóa học:"), g);
-        g.gridx = 1;
-        lblCourse = new JLabel("—");
-        lblCourse.setFont(UITheme.FONT_BODY_BOLD);
-        form.add(lblCourse, g);
+        // Các nhãn hiển thị thông tin
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Khóa học:"), g);
+        g.gridx = 1; lblCourse = new JLabel("—"); lblCourse.setFont(UITheme.FONT_BODY_BOLD); form.add(lblCourse, g);
 
-        // Row: Học phí gốc
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Học phí gốc:"), g);
-        g.gridx = 1;
-        lblFee = new JLabel("—");
-        lblFee.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        lblFee.setForeground(UITheme.PRIMARY);
-        form.add(lblFee, g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Học phí gốc:"), g);
+        g.gridx = 1; lblFee = new JLabel("—"); lblFee.setFont(new Font("Segoe UI", Font.BOLD, 14)); lblFee.setForeground(UITheme.PRIMARY); form.add(lblFee, g);
 
-        // Row: Khuyến mãi
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Khuyến mãi:"), g);
+        // ComboBox chọn Khuyến mãi
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Khuyến mãi:"), g);
         g.gridx = 1;
         cboPromotion = new JComboBox<>();
         cboPromotion.setPreferredSize(new Dimension(350, UITheme.FIELD_HEIGHT));
         cboPromotion.setFont(UITheme.FONT_BODY);
-        cboPromotion.setRenderer((list, value, index, isSelected, cellHasFocus) -> {
-            JLabel label = new JLabel();
-            label.setFont(UITheme.FONT_BODY);
-            label.setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
-            if (value instanceof Promotion promo) {
-                String typeStr = promo.getDiscountType() == Promotion.DiscountType.Percent
-                        ? promo.getDiscountValue() + "%"
-                        : currencyFmt.format(promo.getDiscountValue());
-                label.setText(promo.getPromoName() + " (Giảm " + typeStr + ")");
-            } else if (value instanceof String) {
-                label.setText((String) value);
+        cboPromotion.setRenderer(new DefaultListCellRenderer() { // Tùy chỉnh hiển thị
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof Promotion promo) {
+                    String typeStr = promo.getDiscountType() == Promotion.DiscountType.Percent
+                            ? promo.getDiscountValue() + "%"
+                            : currencyFmt.format(promo.getDiscountValue());
+                    setText(promo.getPromoName() + " (Giảm " + typeStr + ")");
+                } else if (value instanceof String) {
+                    setText((String) value);
+                }
+                return this;
             }
-            if (isSelected) {
-                label.setBackground(list.getSelectionBackground());
-                label.setForeground(list.getSelectionForeground());
-                label.setOpaque(true);
-            }
-            return label;
         });
         cboPromotion.addActionListener(e -> recalculate());
         form.add(cboPromotion, g);
 
-        // Row: Số tiền giảm
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Giảm giá:"), g);
-        g.gridx = 1;
-        lblDiscount = new JLabel("—");
-        lblDiscount.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        lblDiscount.setForeground(new Color(220, 53, 69));
-        form.add(lblDiscount, g);
+        // Các nhãn hiển thị tính toán
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Giảm giá:"), g);
+        g.gridx = 1; lblDiscount = new JLabel("—"); lblDiscount.setFont(new Font("Segoe UI", Font.BOLD, 13)); lblDiscount.setForeground(UITheme.DANGER); form.add(lblDiscount, g);
 
-        // Row: Thành tiền
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Thành tiền:"), g);
-        g.gridx = 1;
-        lblFinalAmount = new JLabel("—");
-        lblFinalAmount.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        lblFinalAmount.setForeground(new Color(25, 135, 84));
-        form.add(lblFinalAmount, g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Thành tiền:"), g);
+        g.gridx = 1; lblFinalAmount = new JLabel("—"); lblFinalAmount.setFont(new Font("Segoe UI", Font.BOLD, 16)); lblFinalAmount.setForeground(UITheme.SUCCESS); form.add(lblFinalAmount, g);
 
-        // Row: Ghi chú
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Ghi chú:"), g);
-        g.gridx = 1;
-        txtNote = new JTextField(25);
-        form.add(txtNote, g);
+        // Ghi chú
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Ghi chú:"), g);
+        g.gridx = 1; txtNote = new JTextField(25); form.add(txtNote, g);
 
-        // Buttons
+        // Các nút hành động
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actions.setOpaque(false);
         actions.setBorder(BorderFactory.createEmptyBorder(12, 0, 0, 0));
-        JButton btnCreate = UITheme.createSuccessButton("Tạo Hóa Đơn", "");
+        JButton btnCreate = UITheme.createSuccessButton("Tạo Hóa Đơn", "📄");
         JButton btnCancel = UITheme.createOutlineButton("Hủy");
         btnCreate.addActionListener(e -> onCreate());
         btnCancel.addActionListener(e -> dispose());
@@ -183,11 +137,14 @@ public class CreateInvoiceDialog extends JDialog {
         getContentPane().add(actions, BorderLayout.SOUTH);
     }
 
+    /**
+     * Tải danh sách các lần ghi danh chưa có hóa đơn.
+     */
     private void loadEnrollments() {
         try {
             List<Enrollment> enrollments = invoiceService.getEnrolledWithoutInvoice();
             cboEnrollment.removeAllItems();
-            enrollments.forEach(e -> cboEnrollment.addItem(e));
+            enrollments.forEach(cboEnrollment::addItem);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Lỗi tải danh sách ghi danh: " + ex.getMessage(), "Lỗi",
                     JOptionPane.ERROR_MESSAGE);
@@ -195,14 +152,14 @@ public class CreateInvoiceDialog extends JDialog {
     }
 
     /**
-     * Load danh sách khuyến mãi đang Active vào combo (dùng Stream forEach).
+     * Tải danh sách các khuyến mãi đang hoạt động.
      */
     private void loadPromotions() {
         try {
             cboPromotion.removeAllItems();
             cboPromotion.addItem("-- Không áp dụng --");
             List<Promotion> activePromos = promotionService.getActivePromotions();
-            activePromos.forEach(p -> cboPromotion.addItem(p));
+            activePromos.forEach(cboPromotion::addItem);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Lỗi tải danh sách khuyến mãi: " + ex.getMessage(), "Lỗi",
                     JOptionPane.ERROR_MESSAGE);
@@ -210,7 +167,7 @@ public class CreateInvoiceDialog extends JDialog {
     }
 
     /**
-     * Tính lại giá hiển thị khi chọn enrollment hoặc promotion thay đổi.
+     * Tính toán lại các giá trị khi lựa chọn thay đổi.
      */
     private void recalculate() {
         Enrollment en = (Enrollment) cboEnrollment.getSelectedItem();
@@ -222,12 +179,10 @@ public class CreateInvoiceDialog extends JDialog {
             return;
         }
 
-        String courseName = en.getClassEntity().getCourse().getCourseName();
         BigDecimal courseFee = en.getClassEntity().getCourse().getFee();
-        lblCourse.setText(courseName);
+        lblCourse.setText(en.getClassEntity().getCourse().getCourseName());
         lblFee.setText(currencyFmt.format(courseFee));
 
-        // Lấy promotion đang chọn
         Object selectedPromo = cboPromotion.getSelectedItem();
         BigDecimal discount = BigDecimal.ZERO;
         if (selectedPromo instanceof Promotion promo) {
@@ -239,14 +194,13 @@ public class CreateInvoiceDialog extends JDialog {
             finalAmount = BigDecimal.ZERO;
         }
 
-        if (discount.compareTo(BigDecimal.ZERO) > 0) {
-            lblDiscount.setText("- " + currencyFmt.format(discount));
-        } else {
-            lblDiscount.setText("Không giảm");
-        }
+        lblDiscount.setText(discount.compareTo(BigDecimal.ZERO) > 0 ? "- " + currencyFmt.format(discount) : "Không giảm");
         lblFinalAmount.setText(currencyFmt.format(finalAmount));
     }
 
+    /**
+     * Xử lý sự kiện tạo hóa đơn.
+     */
     private void onCreate() {
         Enrollment selected = (Enrollment) cboEnrollment.getSelectedItem();
         if (selected == null) {
@@ -254,10 +208,8 @@ public class CreateInvoiceDialog extends JDialog {
             return;
         }
 
-        // Lấy promotionId nếu có chọn
         Long promotionId = null;
-        Object selectedPromo = cboPromotion.getSelectedItem();
-        if (selectedPromo instanceof Promotion promo) {
+        if (cboPromotion.getSelectedItem() instanceof Promotion promo) {
             promotionId = promo.getPromotionId();
         }
 

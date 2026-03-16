@@ -6,8 +6,16 @@ import vn.edu.ute.repo.NotificationRepository;
 
 import java.util.List;
 
+/**
+ * Lớp triển khai của NotificationRepository sử dụng JPA.
+ * Cung cấp logic cụ thể để tương tác với cơ sở dữ liệu cho các đối tượng Notification.
+ */
 public class JpaNotificationRepository implements NotificationRepository {
 
+    /**
+     * {@inheritDoc}
+     * Tải sẵn thông tin người tạo và sắp xếp theo thời gian tạo mới nhất.
+     */
     @Override
     public List<Notification> findAll(EntityManager em) {
         return em.createQuery("SELECT n FROM Notification n LEFT JOIN FETCH n.createdByUser ORDER BY n.createdAt DESC",
@@ -15,16 +23,25 @@ public class JpaNotificationRepository implements NotificationRepository {
                 .getResultList();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Notification findById(EntityManager em, Long id) {
         return em.find(Notification.class, id);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void save(EntityManager em, Notification notification) {
         em.persist(notification);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void delete(EntityManager em, Long id) {
         Notification n = em.find(Notification.class, id);
@@ -34,9 +51,10 @@ public class JpaNotificationRepository implements NotificationRepository {
     }
 
     /**
-     * Lấy thông báo theo role: bao gồm targetRole = 'All' HOẶC targetRole = role
-     * truyền vào.
-     * Sắp xếp mới nhất trước.
+     * {@inheritDoc}
+     * Lấy các thông báo có `targetRole` là 'All' (dành cho tất cả mọi người)
+     * hoặc có `targetRole` khớp với vai trò được chỉ định.
+     * Sắp xếp theo thời gian tạo mới nhất để hiển thị các thông báo gần đây trước.
      */
     @Override
     public List<Notification> findByTargetRole(EntityManager em, Notification.TargetRole role) {

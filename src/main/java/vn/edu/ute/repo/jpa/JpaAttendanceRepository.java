@@ -9,8 +9,16 @@ import vn.edu.ute.repo.AttendanceRepository;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Lớp triển khai của AttendanceRepository sử dụng JPA.
+ * Cung cấp logic cụ thể để tương tác với cơ sở dữ liệu cho nghiệp vụ điểm danh.
+ */
 public class JpaAttendanceRepository implements AttendanceRepository {
 
+    /**
+     * {@inheritDoc}
+     * Lấy danh sách lớp học mà giáo viên phụ trách, trừ các lớp đã hủy.
+     */
     @Override
     public List<ClassEntity> findClassesByTeacherId(EntityManager em, Long teacherId) {
         return em.createQuery(
@@ -25,6 +33,10 @@ public class JpaAttendanceRepository implements AttendanceRepository {
                 .getResultList();
     }
 
+    /**
+     * {@inheritDoc}
+     * Lấy danh sách học viên đang theo học (Enrolled) trong một lớp.
+     */
     @Override
     public List<Enrollment> findEnrolledStudentsByClassId(EntityManager em, Long classId) {
         return em.createQuery(
@@ -39,6 +51,10 @@ public class JpaAttendanceRepository implements AttendanceRepository {
                 .getResultList();
     }
 
+    /**
+     * {@inheritDoc}
+     * Lấy thông tin điểm danh của một lớp vào một ngày cụ thể.
+     */
     @Override
     public List<Attendance> findByClassAndDate(EntityManager em, Long classId, LocalDate date) {
         return em.createQuery(
@@ -54,11 +70,17 @@ public class JpaAttendanceRepository implements AttendanceRepository {
                 .getResultList();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void save(EntityManager em, Attendance attendance) {
         em.persist(attendance);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void update(EntityManager em, Attendance attendance) {
         em.merge(attendance);

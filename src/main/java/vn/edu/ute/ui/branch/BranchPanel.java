@@ -9,6 +9,9 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 
+/**
+ * Lớp `BranchPanel` tạo giao diện quản lý các chi nhánh của trung tâm.
+ */
 public class BranchPanel extends JPanel {
 
     private final BranchService branchService;
@@ -24,12 +27,16 @@ public class BranchPanel extends JPanel {
         loadData();
     }
 
+    /**
+     * Xây dựng giao diện người dùng.
+     */
     private void buildUI() {
+        // Thanh công cụ
         JPanel toolbar = UITheme.createToolbar();
-        JButton btnAdd = UITheme.createSuccessButton("Thêm Mới", "");
-        JButton btnEdit = UITheme.createPrimaryButton("Sửa", "");
-        JButton btnDelete = UITheme.createDangerButton("Xóa", "");
-        JButton btnRefresh = UITheme.createNeutralButton("Làm Mới", "");
+        JButton btnAdd = UITheme.createSuccessButton("Thêm Mới", "➕");
+        JButton btnEdit = UITheme.createPrimaryButton("Sửa", "✏️");
+        JButton btnDelete = UITheme.createDangerButton("Xóa", "🗑");
+        JButton btnRefresh = UITheme.createNeutralButton("Làm Mới", "🔄");
 
         btnAdd.addActionListener(e -> onAdd());
         btnEdit.addActionListener(e -> onEdit());
@@ -41,30 +48,34 @@ public class BranchPanel extends JPanel {
         toolbar.add(btnDelete);
         toolbar.add(btnRefresh);
 
-        JPanel searchPanel = UITheme.createSearchPanel(txtSearch);
+        // Panel tìm kiếm
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        searchPanel.setOpaque(false);
+        searchPanel.add(new JLabel("Tìm kiếm:"));
+        searchPanel.add(txtSearch);
 
-        // Search listener dùng lambda expression
+        // Listener cho ô tìm kiếm
         txtSearch.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) {
-                tableModel.setFilter(txtSearch.getText());
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                tableModel.setFilter(txtSearch.getText());
-            }
-
-            public void changedUpdate(DocumentEvent e) {
-                tableModel.setFilter(txtSearch.getText());
-            }
+            public void insertUpdate(DocumentEvent e) { tableModel.setFilter(txtSearch.getText()); }
+            public void removeUpdate(DocumentEvent e) { tableModel.setFilter(txtSearch.getText()); }
+            public void changedUpdate(DocumentEvent e) { tableModel.setFilter(txtSearch.getText()); }
         });
 
-        add(UITheme.createTopPanel(toolbar, searchPanel), BorderLayout.NORTH);
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setOpaque(false);
+        topPanel.add(toolbar, BorderLayout.WEST);
+        topPanel.add(searchPanel, BorderLayout.EAST);
 
+        add(topPanel, BorderLayout.NORTH);
+
+        // Bảng dữ liệu
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        UITheme.styleTable(table);
         add(UITheme.createStyledScrollPane(table), BorderLayout.CENTER);
     }
 
+    /**
+     * Tải dữ liệu chi nhánh từ service và cập nhật vào table model.
+     */
     private void loadData() {
         try {
             tableModel.setData(branchService.getAllBranches());
@@ -74,6 +85,9 @@ public class BranchPanel extends JPanel {
         }
     }
 
+    /**
+     * Xử lý sự kiện thêm mới chi nhánh.
+     */
     private void onAdd() {
         BranchFormDialog dlg = new BranchFormDialog(
                 (Frame) SwingUtilities.getWindowAncestor(this), "Thêm Chi Nhánh", null);
@@ -89,6 +103,9 @@ public class BranchPanel extends JPanel {
         }
     }
 
+    /**
+     * Xử lý sự kiện sửa thông tin chi nhánh.
+     */
     private void onEdit() {
         int selectedRow = table.getSelectedRow();
         if (selectedRow < 0) {
@@ -110,6 +127,9 @@ public class BranchPanel extends JPanel {
         }
     }
 
+    /**
+     * Xử lý sự kiện xóa chi nhánh.
+     */
     private void onDelete() {
         int selectedRow = table.getSelectedRow();
         if (selectedRow < 0) {
@@ -125,6 +145,7 @@ public class BranchPanel extends JPanel {
                 branchService.deleteBranch(selected.getBranchId());
                 loadData();
             } catch (Exception ex) {
+                // Hiển thị thông báo lỗi từ service (ví dụ: không thể xóa vì còn phòng học)
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }

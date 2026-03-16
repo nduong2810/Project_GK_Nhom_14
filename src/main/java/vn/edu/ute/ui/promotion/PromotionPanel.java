@@ -9,6 +9,9 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 
+/**
+ * Lớp `PromotionPanel` tạo giao diện quản lý các chương trình khuyến mãi.
+ */
 public class PromotionPanel extends JPanel {
 
     private final PromotionService promotionService;
@@ -24,12 +27,15 @@ public class PromotionPanel extends JPanel {
         loadData();
     }
 
+    /**
+     * Xây dựng giao diện người dùng.
+     */
     private void buildUI() {
         JPanel toolbar = UITheme.createToolbar();
-        JButton btnAdd = UITheme.createSuccessButton("Thêm Mới", "");
-        JButton btnEdit = UITheme.createPrimaryButton("Sửa", "");
-        JButton btnDelete = UITheme.createDangerButton("Xóa", "");
-        JButton btnRefresh = UITheme.createNeutralButton("Làm Mới", "");
+        JButton btnAdd = UITheme.createSuccessButton("Thêm Mới", "➕");
+        JButton btnEdit = UITheme.createPrimaryButton("Sửa", "✏️");
+        JButton btnDelete = UITheme.createDangerButton("Xóa", "🗑");
+        JButton btnRefresh = UITheme.createNeutralButton("Làm Mới", "🔄");
 
         btnAdd.addActionListener(e -> onAdd());
         btnEdit.addActionListener(e -> onEdit());
@@ -41,34 +47,35 @@ public class PromotionPanel extends JPanel {
         toolbar.add(btnDelete);
         toolbar.add(btnRefresh);
 
-        JPanel searchPanel = UITheme.createSearchPanel(txtSearch);
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        searchPanel.setOpaque(false);
+        searchPanel.add(new JLabel("Tìm kiếm:"));
+        searchPanel.add(txtSearch);
 
-        // Search listener dùng lambda expression
         txtSearch.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) {
-                tableModel.setFilter(txtSearch.getText());
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                tableModel.setFilter(txtSearch.getText());
-            }
-
-            public void changedUpdate(DocumentEvent e) {
-                tableModel.setFilter(txtSearch.getText());
-            }
+            public void insertUpdate(DocumentEvent e) { tableModel.setFilter(txtSearch.getText()); }
+            public void removeUpdate(DocumentEvent e) { tableModel.setFilter(txtSearch.getText()); }
+            public void changedUpdate(DocumentEvent e) { tableModel.setFilter(txtSearch.getText()); }
         });
 
-        add(UITheme.createTopPanel(toolbar, searchPanel), BorderLayout.NORTH);
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setOpaque(false);
+        topPanel.add(toolbar, BorderLayout.WEST);
+        topPanel.add(searchPanel, BorderLayout.EAST);
+
+        add(topPanel, BorderLayout.NORTH);
 
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        UITheme.styleTable(table);
         add(UITheme.createStyledScrollPane(table), BorderLayout.CENTER);
     }
 
+    /**
+     * Tải dữ liệu khuyến mãi bất đồng bộ.
+     */
     private void loadData() {
-        new SwingWorker<java.util.List<vn.edu.ute.model.Promotion>, Void>() {
+        new SwingWorker<java.util.List<Promotion>, Void>() {
             @Override
-            protected java.util.List<vn.edu.ute.model.Promotion> doInBackground() throws Exception {
+            protected java.util.List<Promotion> doInBackground() throws Exception {
                 return promotionService.getAllPromotions();
             }
             @Override
@@ -83,6 +90,9 @@ public class PromotionPanel extends JPanel {
         }.execute();
     }
 
+    /**
+     * Xử lý sự kiện thêm mới.
+     */
     private void onAdd() {
         PromotionFormDialog dlg = new PromotionFormDialog(
                 (Frame) SwingUtilities.getWindowAncestor(this), "Thêm Khuyến Mãi", null);
@@ -98,6 +108,9 @@ public class PromotionPanel extends JPanel {
         }
     }
 
+    /**
+     * Xử lý sự kiện sửa.
+     */
     private void onEdit() {
         int selectedRow = table.getSelectedRow();
         if (selectedRow < 0) {
@@ -119,6 +132,9 @@ public class PromotionPanel extends JPanel {
         }
     }
 
+    /**
+     * Xử lý sự kiện xóa.
+     */
     private void onDelete() {
         int selectedRow = table.getSelectedRow();
         if (selectedRow < 0) {

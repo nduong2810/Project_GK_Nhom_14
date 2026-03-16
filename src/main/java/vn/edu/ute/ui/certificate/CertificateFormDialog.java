@@ -11,6 +11,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+/**
+ * Lớp `CertificateFormDialog` tạo hộp thoại để cấp hoặc sửa thông tin chứng chỉ.
+ */
 public class CertificateFormDialog extends JDialog {
     private final JComboBox<Student> cboStudent = new JComboBox<>();
     private final JComboBox<ClassEntity> cboClass = new JComboBox<>();
@@ -26,15 +29,16 @@ public class CertificateFormDialog extends JDialog {
         super(owner, title, true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
-        for (Student s : students) cboStudent.addItem(s);
-
-        cboClass.addItem(null);
-        for (ClassEntity c : classes) cboClass.addItem(c);
+        students.forEach(cboStudent::addItem);
+        cboClass.addItem(null); // Cho phép không chọn lớp
+        classes.forEach(cboClass::addItem);
 
         setupComboBoxRenderers();
         buildUI();
 
         if (existing != null) {
+            // Chế độ sửa
+            this.certificate = existing;
             if (existing.getStudent() != null) setComboSelection(cboStudent, existing.getStudent().getStudentId());
             if (existing.getClassEntity() != null) setComboSelection(cboClass, existing.getClassEntity().getClassId());
             else cboClass.setSelectedIndex(0);
@@ -42,8 +46,8 @@ public class CertificateFormDialog extends JDialog {
             txtCertName.setText(existing.getCertName());
             txtIssueDate.setText(existing.getIssueDate() != null ? existing.getIssueDate().format(dateFormatter) : "");
             txtSerialNo.setText(existing.getSerialNo());
-            this.certificate = existing;
         } else {
+            // Chế độ thêm mới
             this.certificate = new Certificate();
             txtIssueDate.setText(LocalDate.now().format(dateFormatter));
         }
@@ -52,44 +56,44 @@ public class CertificateFormDialog extends JDialog {
         setLocationRelativeTo(owner);
     }
 
+    /**
+     * Tùy chỉnh hiển thị cho các ComboBox.
+     */
     private void setupComboBoxRenderers() {
         cboStudent.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value instanceof Student) {
-                    Student s = (Student) value;
-                    setText(s.getFullName() + " - " + (s.getPhone() != null ? s.getPhone() : "N/A"));
-                }
+            public Component getListCellRendererComponent(JList<?> l, Object v, int i, boolean s, boolean f) {
+                super.getListCellRendererComponent(l, v, i, s, f);
+                if (v instanceof Student st) setText(st.getFullName());
                 return this;
             }
         });
 
         cboClass.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value == null) {
-                    setText("--- (Không thuộc lớp nào) ---");
-                } else if (value instanceof ClassEntity) {
-                    setText(((ClassEntity) value).getClassName());
-                }
+            public Component getListCellRendererComponent(JList<?> l, Object v, int i, boolean s, boolean f) {
+                super.getListCellRendererComponent(l, v, i, s, f);
+                if (v == null) setText("--- (Không thuộc lớp nào) ---");
+                else if (v instanceof ClassEntity c) setText(c.getClassName());
                 return this;
             }
         });
     }
 
+    /**
+     * Tiện ích chọn item trong ComboBox theo ID.
+     */
     private void setComboSelection(JComboBox<?> combo, Long idTarget) {
         for (int i = 0; i < combo.getItemCount(); i++) {
             Object item = combo.getItemAt(i);
-            if (item instanceof Student && ((Student) item).getStudentId().equals(idTarget)) { combo.setSelectedIndex(i); return; }
-            if (item instanceof ClassEntity && ((ClassEntity) item).getClassId().equals(idTarget)) { combo.setSelectedIndex(i); return; }
+            if (item instanceof Student s && s.getStudentId().equals(idTarget)) { combo.setSelectedIndex(i); return; }
+            if (item instanceof ClassEntity c && c.getClassId().equals(idTarget)) { combo.setSelectedIndex(i); return; }
         }
     }
 
+    /**
+     * Xây dựng giao diện người dùng.
+     */
     private void buildUI() {
         UITheme.styleDialog(this);
-
         JPanel form = new JPanel(new GridBagLayout());
         form.setOpaque(false);
         GridBagConstraints g = new GridBagConstraints();
@@ -100,32 +104,22 @@ public class CertificateFormDialog extends JDialog {
         int r = 0;
         g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Học Viên (*):"), g);
         g.gridx = 1; form.add(cboStudent, g);
-
-        r++;
-        g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Lớp Học (Tùy chọn):"), g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Lớp Học (Tùy chọn):"), g);
         g.gridx = 1; form.add(cboClass, g);
-
-        r++;
-        g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Tên Chứng Chỉ (*):"), g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Tên Chứng Chỉ (*):"), g);
         g.gridx = 1; form.add(txtCertName, g);
-
-        r++;
-        g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Ngày Cấp (dd/MM/yyyy):"), g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Ngày Cấp (dd/MM/yyyy):"), g);
         g.gridx = 1; form.add(txtIssueDate, g);
-
-        r++;
-        g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Số Serial:"), g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Số Serial:"), g);
         g.gridx = 1; form.add(txtSerialNo, g);
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actions.setOpaque(false);
         actions.setBorder(BorderFactory.createEmptyBorder(12, 0, 0, 0));
-
-        JButton btnSave = UITheme.createPrimaryButton("Lưu", "");
+        JButton btnSave = UITheme.createPrimaryButton("Lưu", "💾");
         JButton btnCancel = UITheme.createOutlineButton("Hủy");
         btnSave.addActionListener(e -> onSave());
         btnCancel.addActionListener(e -> dispose());
-
         actions.add(btnSave);
         actions.add(btnCancel);
 
@@ -133,14 +127,15 @@ public class CertificateFormDialog extends JDialog {
         getContentPane().add(actions, BorderLayout.SOUTH);
     }
 
+    /**
+     * Xử lý sự kiện khi nhấn nút "Lưu".
+     */
     private void onSave() {
         try {
             Student selectedStudent = (Student) cboStudent.getSelectedItem();
             if (selectedStudent == null) throw new IllegalArgumentException("Vui lòng chọn học viên.");
-
             String certName = txtCertName.getText().trim();
             if (certName.isEmpty()) throw new IllegalArgumentException("Tên chứng chỉ không được để trống.");
-
             LocalDate iDate;
             try {
                 iDate = LocalDate.parse(txtIssueDate.getText().trim(), dateFormatter);

@@ -16,7 +16,9 @@ import java.util.*;
 import java.util.List;
 
 /**
- * SRP: FinancePanel nhận 3 service riêng biệt thay vì 1 FinanceService.
+ * Lớp `FinancePanel` tạo giao diện quản lý tài chính, bao gồm hóa đơn và thanh toán.
+ * SRP (Single Responsibility Principle): Panel này nhận 3 service riêng biệt (Invoice, Payment, Refund)
+ * thay vì một service lớn, giúp phân tách rõ ràng các trách nhiệm.
  */
 public class FinancePanel extends JPanel {
 
@@ -42,6 +44,9 @@ public class FinancePanel extends JPanel {
         loadInvoices();
     }
 
+    /**
+     * Xây dựng giao diện người dùng, chia thành 2 phần: hóa đơn và lịch sử thanh toán.
+     */
     private void buildUI() {
         // ============ PHẦN TRÊN: Danh sách Hóa đơn ============
         JPanel invoiceSection = new JPanel(new BorderLayout(5, 5));
@@ -68,28 +73,25 @@ public class FinancePanel extends JPanel {
         toolbar.add(btnRefund);
         toolbar.add(btnRefresh);
 
-        JPanel searchPanel = UITheme.createSearchPanel(txtSearch);
+        // Panel tìm kiếm
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        searchPanel.setOpaque(false);
+        searchPanel.add(new JLabel("Tìm kiếm:"));
+        searchPanel.add(txtSearch);
         txtSearch.setToolTipText("Nhập ID hóa đơn hoặc tên học viên để lọc nhanh");
 
         txtSearch.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                onSearchChanged();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                onSearchChanged();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                onSearchChanged();
-            }
+            public void insertUpdate(DocumentEvent e) { onSearchChanged(); }
+            public void removeUpdate(DocumentEvent e) { onSearchChanged(); }
+            public void changedUpdate(DocumentEvent e) { onSearchChanged(); }
         });
 
-        JPanel topToolbar = UITheme.createTopPanel(toolbar, searchPanel);
+        JPanel topToolbar = new JPanel(new BorderLayout());
+        topToolbar.setOpaque(false);
+        topToolbar.add(toolbar, BorderLayout.WEST);
+        topToolbar.add(searchPanel, BorderLayout.EAST);
 
+        // Bảng hóa đơn
         invoiceTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         UITheme.styleTable(invoiceTable);
         invoiceTable.getSelectionModel().addListSelectionListener(e -> {
@@ -106,7 +108,6 @@ public class FinancePanel extends JPanel {
         paymentSection.setBorder(UITheme.createTitledBorder("Lịch Sử Thanh Toán (của hóa đơn được chọn)"));
         paymentSection.setBackground(UITheme.BG_CARD);
 
-        paymentTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         UITheme.styleTable(paymentTable);
         paymentSection.add(new JScrollPane(paymentTable), BorderLayout.CENTER);
 
@@ -119,27 +120,29 @@ public class FinancePanel extends JPanel {
         add(splitPane, BorderLayout.CENTER);
     }
 
-    // ==================== SEARCH ====================
-
     private void onSearchChanged() {
         invoiceTableModel.setFilter(txtSearch.getText());
     }
 
-    // ==================== DATA LOADING ====================
-
+    /**
+     * Tải dữ liệu hóa đơn và tổng số tiền đã thanh toán.
+     */
     private void loadInvoices() {
         try {
             List<Invoice> invoices = invoiceService.getAllInvoices();
             invoices.sort(Comparator.comparing(Invoice::getInvoiceId).reversed());
             Map<Long, BigDecimal> paidMap = paymentService.getAllPaidAmounts();
             invoiceTableModel.setData(invoices, paidMap);
-            paymentTableModel.setData(Collections.emptyList());
+            paymentTableModel.setData(Collections.emptyList()); // Xóa lịch sử thanh toán cũ
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Lỗi tải dữ liệu hóa đơn: " + ex.getMessage(),
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
+    /**
+     * Khi một hóa đơn được chọn, tải lịch sử thanh toán tương ứng.
+     */
     private void onInvoiceSelected() {
         int selectedRow = invoiceTable.getSelectedRow();
         if (selectedRow < 0) {
@@ -157,7 +160,7 @@ public class FinancePanel extends JPanel {
         }
     }
 
-    // ==================== ACTIONS ====================
+    // ==================== CÁC HÀNH ĐỘNG ====================
 
     private void onCreateInvoice() {
         CreateInvoiceDialog dlg = new CreateInvoiceDialog((Frame) SwingUtilities.getWindowAncestor(this),
@@ -175,6 +178,7 @@ public class FinancePanel extends JPanel {
             return;
         }
         Invoice selectedInvoice = invoiceTableModel.getAt(selectedRow);
+        // Kiểm tra trạng thái hóa đơn trước khi thanh toán
         if (selectedInvoice.getStatus() == Invoice.Status.Paid) {
             JOptionPane.showMessageDialog(this, "Hóa đơn này đã được thanh toán đầy đủ.", "Thông báo",
                     JOptionPane.INFORMATION_MESSAGE);
@@ -230,7 +234,7 @@ public class FinancePanel extends JPanel {
                 "Xác nhận hoàn tiền", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
         if (confirm == JOptionPane.YES_OPTION) {
             try {
-                java.math.BigDecimal refundAmount = refundService.refundInvoice(selectedInvoice.getInvoiceId());
+                BigDecimal refundAmount = refundService.refundInvoice(selectedInvoice.getInvoiceId());
                 JOptionPane.showMessageDialog(this,
                         String.format("Hoàn tiền thành công!\nSố tiền hoàn: %,.0f đ (70%%)", refundAmount),
                         "Thành công", JOptionPane.INFORMATION_MESSAGE);

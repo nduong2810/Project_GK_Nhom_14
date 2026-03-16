@@ -11,63 +11,64 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
- * Hệ thống Design Token tập trung cho toàn bộ UI.
- * Cung cấp màu sắc, font, và factory methods để tạo các component styled.
+ * Lớp UITheme hoạt động như một hệ thống "Design Token" tập trung cho toàn bộ giao diện người dùng.
+ * Nó cung cấp các hằng số cho màu sắc, font chữ, kích thước và các phương thức factory
+ * để tạo ra các thành phần Swing đã được định dạng sẵn, đảm bảo sự nhất quán trong toàn bộ ứng dụng.
  */
 public final class UITheme {
     private UITheme() {
     }
 
-    // ==================== COLOR PALETTE ====================
+    // ==================== BẢNG MÀU (COLOR PALETTE) ====================
 
-    // Primary (Blue)
+    // Màu chính (Xanh dương)
     public static final Color PRIMARY = new Color(41, 98, 255);
-    public static final Color PRIMARY_HOVER = new Color(28, 78, 216);
-    public static final Color PRIMARY_LIGHT = new Color(227, 236, 255);
+    public static final Color PRIMARY_HOVER = new Color(28, 78, 216); // Đậm hơn cho hiệu ứng hover
+    public static final Color PRIMARY_LIGHT = new Color(227, 236, 255); // Nhạt hơn cho nền hoặc highlight
     public static final Color PRIMARY_VERY_LIGHT = new Color(240, 245, 255);
 
-    // Success (Green)
+    // Màu thành công (Xanh lá)
     public static final Color SUCCESS = new Color(22, 163, 74);
     public static final Color SUCCESS_HOVER = new Color(18, 138, 62);
     public static final Color SUCCESS_LIGHT = new Color(220, 252, 231);
 
-    // Warning (Amber/Orange)
+    // Màu cảnh báo (Vàng cam)
     public static final Color WARNING = new Color(234, 159, 12);
     public static final Color WARNING_HOVER = new Color(202, 138, 8);
     public static final Color WARNING_LIGHT = new Color(254, 243, 199);
 
-    // Danger (Red)
+    // Màu nguy hiểm/lỗi (Đỏ)
     public static final Color DANGER = new Color(220, 38, 38);
     public static final Color DANGER_HOVER = new Color(185, 28, 28);
     public static final Color DANGER_LIGHT = new Color(254, 226, 226);
 
-    // Neutral (Gray)
+    // Màu trung tính (Xám)
     public static final Color NEUTRAL_50 = new Color(249, 250, 251);
     public static final Color NEUTRAL_100 = new Color(243, 244, 246);
     public static final Color NEUTRAL_200 = new Color(229, 231, 235);
     public static final Color NEUTRAL_300 = new Color(209, 213, 219);
-    public static final Color NEUTRAL_400 = new Color(156, 163, 175);
+    public static final Color NEUTRAL_400 = new Color(156, 163, 175); // Dùng cho placeholder text
     public static final Color NEUTRAL_500 = new Color(107, 114, 128);
     public static final Color NEUTRAL_600 = new Color(75, 85, 99);
     public static final Color NEUTRAL_700 = new Color(55, 65, 81);
     public static final Color NEUTRAL_800 = new Color(31, 41, 55);
     public static final Color NEUTRAL_900 = new Color(17, 24, 39);
 
-    // Background
-    public static final Color BG_MAIN = new Color(246, 248, 252);
-    public static final Color BG_CARD = Color.WHITE;
-    public static final Color BG_HEADER = new Color(30, 58, 138);
+    // Màu nền
+    public static final Color BG_MAIN = new Color(246, 248, 252); // Nền chính của các panel
+    public static final Color BG_CARD = Color.WHITE; // Nền cho các "thẻ"
+    public static final Color BG_HEADER = new Color(30, 58, 138); // Nền cho header chính
     public static final Color BG_HEADER_LIGHT = new Color(37, 73, 170);
 
-    // Table
+    // Màu cho bảng (Table)
     public static final Color TABLE_HEADER_BG = new Color(241, 245, 249);
     public static final Color TABLE_HEADER_FG = NEUTRAL_700;
-    public static final Color TABLE_ALT_ROW = new Color(248, 250, 252);
+    public static final Color TABLE_ALT_ROW = new Color(248, 250, 252); // Màu cho hàng xen kẽ
     public static final Color TABLE_SELECTION_BG = new Color(219, 234, 254);
     public static final Color TABLE_SELECTION_FG = NEUTRAL_900;
     public static final Color TABLE_GRID = new Color(226, 232, 240);
 
-    // ==================== FONTS ====================
+    // ==================== FONT CHỮ ====================
 
     public static final Font FONT_HEADER = new Font("Segoe UI", Font.BOLD, 22);
     public static final Font FONT_SUB_HEADER = new Font("Segoe UI", Font.BOLD, 16);
@@ -78,7 +79,7 @@ public final class UITheme {
     public static final Font FONT_TABLE_HEADER = new Font("Segoe UI", Font.BOLD, 12);
     public static final Font FONT_TABLE_BODY = new Font("Segoe UI", Font.PLAIN, 12);
 
-    // ==================== SIZES ====================
+    // ==================== KÍCH THƯỚC ====================
 
     public static final int BUTTON_HEIGHT = 32;
     public static final int FIELD_HEIGHT = 32;
@@ -87,55 +88,35 @@ public final class UITheme {
     public static final int PANEL_PADDING = 12;
     public static final int BORDER_RADIUS = 8;
 
-    // ==================== FACTORY METHODS ====================
+    // ==================== PHƯƠNG THỨC FACTORY ĐỂ TẠO COMPONENT ====================
 
-    /** Tạo nút chính (Primary Blue). */
-    public static JButton createPrimaryButton(String text) {
-        return createStyledButton(text, PRIMARY, PRIMARY_HOVER, Color.WHITE);
-    }
-
+    /** Tạo nút chính (màu xanh dương). */
     public static JButton createPrimaryButton(String text, String icon) {
         return createStyledButton(text, PRIMARY, PRIMARY_HOVER, Color.WHITE);
     }
 
-    /** Tạo nút thành công (Green). */
-    public static JButton createSuccessButton(String text) {
-        return createStyledButton(text, SUCCESS, SUCCESS_HOVER, Color.WHITE);
-    }
-
+    /** Tạo nút thành công (màu xanh lá). */
     public static JButton createSuccessButton(String text, String icon) {
         return createStyledButton(text, SUCCESS, SUCCESS_HOVER, Color.WHITE);
     }
 
-    /** Tạo nút cảnh báo (Orange/Amber). */
-    public static JButton createWarningButton(String text) {
-        return createStyledButton(text, WARNING, WARNING_HOVER, Color.WHITE);
-    }
-
+    /** Tạo nút cảnh báo (màu vàng cam). */
     public static JButton createWarningButton(String text, String icon) {
         return createStyledButton(text, WARNING, WARNING_HOVER, Color.WHITE);
     }
 
-    /** Tạo nút nguy hiểm (Red). */
-    public static JButton createDangerButton(String text) {
-        return createStyledButton(text, DANGER, DANGER_HOVER, Color.WHITE);
-    }
-
+    /** Tạo nút nguy hiểm/lỗi (màu đỏ). */
     public static JButton createDangerButton(String text, String icon) {
         return createStyledButton(text, DANGER, DANGER_HOVER, Color.WHITE);
     }
 
-    /** Tạo nút trung tính (Gray). */
-    public static JButton createNeutralButton(String text) {
-        return createStyledButton(text, NEUTRAL_500, NEUTRAL_600, Color.WHITE);
-    }
-
+    /** Tạo nút trung tính (màu xám). */
     public static JButton createNeutralButton(String text, String icon) {
         return createStyledButton(text, NEUTRAL_500, NEUTRAL_600, Color.WHITE);
     }
 
     /**
-     * Tạo nút outline (viền, không fill) — dùng cho hành động phụ.
+     * Tạo nút có viền (outline), không có màu nền. Thường dùng cho các hành động phụ.
      */
     public static JButton createOutlineButton(String text) {
         JButton btn = new JButton(text);
@@ -167,7 +148,7 @@ public final class UITheme {
     }
 
     /**
-     * Tạo nút styled cơ bản với hover effect.
+     * Phương thức private để tạo một nút đã được định dạng cơ bản với hiệu ứng hover.
      */
     private static JButton createStyledButton(String text, Color bg, Color hoverBg, Color fg) {
         JButton btn = new JButton(text);
@@ -177,7 +158,6 @@ public final class UITheme {
         btn.setBorder(BorderFactory.createEmptyBorder(6, 16, 6, 16));
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        // Let the button auto-size its width based on content; only enforce minimum height
         btn.setMargin(new Insets(0, 0, 0, 0));
         SwingUtilities.invokeLater(() -> {
             Dimension pref = btn.getPreferredSize();
@@ -199,7 +179,7 @@ public final class UITheme {
     }
 
     /**
-     * Tạo JTextField với placeholder text màu xám — phiên bản nâng cấp.
+     * Tạo một JTextField với văn bản gợi ý (placeholder) màu xám khi trống và không được focus.
      */
     public static JTextField createSearchField(String placeholder, int columns) {
         JTextField field = new JTextField(columns) {
@@ -243,7 +223,7 @@ public final class UITheme {
     }
 
     /**
-     * Tạo JLabel tiêu đề cho form.
+     * Tạo một JLabel được định dạng để dùng làm nhãn cho các trường trong form.
      */
     public static JLabel createFormLabel(String text) {
         JLabel label = new JLabel(text);
@@ -253,7 +233,7 @@ public final class UITheme {
     }
 
     /**
-     * Tạo JLabel tiêu đề section.
+     * Tạo một JLabel được định dạng để dùng làm tiêu đề cho một khu vực (section).
      */
     public static JLabel createSectionTitle(String text) {
         JLabel label = new JLabel(text);
@@ -264,7 +244,7 @@ public final class UITheme {
     }
 
     /**
-     * Style một JTable cho đẹp (alternating rows, header styled, v.v.).
+     * Áp dụng các định dạng cho một JTable (màu xen kẽ, header, v.v.).
      */
     public static void styleTable(JTable table) {
         table.setFont(FONT_TABLE_BODY);
@@ -278,7 +258,7 @@ public final class UITheme {
         table.setFillsViewportHeight(true);
         table.setBackground(Color.WHITE);
 
-        // Alternating row colors
+        // Định dạng màu xen kẽ cho các hàng
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable tbl, Object value,
@@ -292,7 +272,7 @@ public final class UITheme {
             }
         });
 
-        // Style header
+        // Định dạng cho header của bảng
         JTableHeader header = table.getTableHeader();
         header.setFont(FONT_TABLE_HEADER);
         header.setBackground(TABLE_HEADER_BG);
@@ -304,7 +284,7 @@ public final class UITheme {
     }
 
     /**
-     * Style một JScrollPane chứa JTable.
+     * Tạo một JScrollPane chứa một JTable đã được định dạng.
      */
     public static JScrollPane createStyledScrollPane(JTable table) {
         styleTable(table);
@@ -315,13 +295,43 @@ public final class UITheme {
     }
 
     /**
-     * Tạo toolbar panel chứa buttons, đã có styling.
+     * Tạo một JPanel được định dạng để dùng làm thanh công cụ (toolbar).
      */
     public static JPanel createToolbar() {
         JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
         toolbar.setOpaque(false);
         toolbar.setBorder(BorderFactory.createEmptyBorder(0, 0, TOOLBAR_PADDING, 0));
         return toolbar;
+    }
+
+    /**
+     * Áp dụng định dạng cho một panel chính (nền, padding).
+     */
+    public static void applyPanelStyle(JPanel panel) {
+        panel.setBackground(BG_MAIN);
+        panel.setBorder(BorderFactory.createEmptyBorder(PANEL_PADDING, PANEL_PADDING, PANEL_PADDING, PANEL_PADDING));
+    }
+
+    /**
+     * Áp dụng định dạng cho một JDialog (nền, padding).
+     */
+    public static void styleDialog(JDialog dialog) {
+        dialog.getContentPane().setBackground(BG_MAIN);
+        ((JPanel) dialog.getContentPane()).setBorder(
+                BorderFactory.createEmptyBorder(16, 20, 16, 20));
+    }
+
+    /**
+     * Tạo titled border hiện đại.
+     */
+    public static Border createTitledBorder(String title) {
+        return BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(NEUTRAL_200, 1, true),
+                " " + title + " ",
+                javax.swing.border.TitledBorder.LEFT,
+                javax.swing.border.TitledBorder.TOP,
+                FONT_BODY_BOLD,
+                NEUTRAL_600);
     }
 
     /**
@@ -350,36 +360,6 @@ public final class UITheme {
         searchPanel.add(searchLabel);
         searchPanel.add(searchField);
         return searchPanel;
-    }
-
-    /**
-     * Áp dụng style cho panel chính (background, padding).
-     */
-    public static void applyPanelStyle(JPanel panel) {
-        panel.setBackground(BG_MAIN);
-        panel.setBorder(BorderFactory.createEmptyBorder(PANEL_PADDING, PANEL_PADDING, PANEL_PADDING, PANEL_PADDING));
-    }
-
-    /**
-     * Áp dụng style cho dialog (padding, background).
-     */
-    public static void styleDialog(JDialog dialog) {
-        dialog.getContentPane().setBackground(BG_MAIN);
-        ((JPanel) dialog.getContentPane()).setBorder(
-                BorderFactory.createEmptyBorder(16, 20, 16, 20));
-    }
-
-    /**
-     * Tạo titled border hiện đại.
-     */
-    public static Border createTitledBorder(String title) {
-        return BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(NEUTRAL_200, 1, true),
-                " " + title + " ",
-                javax.swing.border.TitledBorder.LEFT,
-                javax.swing.border.TitledBorder.TOP,
-                FONT_BODY_BOLD,
-                NEUTRAL_600);
     }
 
     /**

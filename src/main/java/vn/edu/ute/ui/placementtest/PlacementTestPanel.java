@@ -11,6 +11,9 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.util.List;
 
+/**
+ * Lớp `PlacementTestPanel` tạo giao diện quản lý kết quả thi xếp lớp.
+ */
 public class PlacementTestPanel extends JPanel {
     private final PlacementTestService testService;
     private final StudentService studentService;
@@ -29,12 +32,15 @@ public class PlacementTestPanel extends JPanel {
         loadData();
     }
 
+    /**
+     * Xây dựng giao diện người dùng.
+     */
     private void buildUI() {
         JPanel toolbar = UITheme.createToolbar();
-        JButton btnAdd = UITheme.createSuccessButton("Thêm Kết Quả Thi", "");
-        JButton btnEdit = UITheme.createPrimaryButton("Sửa", "");
-        JButton btnDelete = UITheme.createDangerButton("Xóa", "");
-        JButton btnRefresh = UITheme.createNeutralButton("Làm Mới", "");
+        JButton btnAdd = UITheme.createSuccessButton("Thêm Kết Quả Thi", "➕");
+        JButton btnEdit = UITheme.createPrimaryButton("Sửa", "✏️");
+        JButton btnDelete = UITheme.createDangerButton("Xóa", "🗑");
+        JButton btnRefresh = UITheme.createNeutralButton("Làm Mới", "🔄");
 
         btnAdd.addActionListener(e -> onAdd());
         btnEdit.addActionListener(e -> onEdit());
@@ -46,7 +52,10 @@ public class PlacementTestPanel extends JPanel {
         toolbar.add(btnDelete);
         toolbar.add(btnRefresh);
 
-        JPanel searchPanel = UITheme.createSearchPanel(txtSearch);
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        searchPanel.setOpaque(false);
+        searchPanel.add(new JLabel("Tìm kiếm:"));
+        searchPanel.add(txtSearch);
 
         txtSearch.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) { tableModel.setFilter(txtSearch.getText()); }
@@ -54,13 +63,20 @@ public class PlacementTestPanel extends JPanel {
             public void changedUpdate(DocumentEvent e) { tableModel.setFilter(txtSearch.getText()); }
         });
 
-        add(UITheme.createTopPanel(toolbar, searchPanel), BorderLayout.NORTH);
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setOpaque(false);
+        topPanel.add(toolbar, BorderLayout.WEST);
+        topPanel.add(searchPanel, BorderLayout.EAST);
+
+        add(topPanel, BorderLayout.NORTH);
 
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table.setRowHeight(30); // Tăng chiều cao hàng cho thoáng
         add(UITheme.createStyledScrollPane(table), BorderLayout.CENTER);
     }
 
+    /**
+     * Tải dữ liệu bất đồng bộ.
+     */
     private void loadData() {
         new SwingWorker<List<PlacementTest>, Void>() {
             @Override
@@ -75,6 +91,9 @@ public class PlacementTestPanel extends JPanel {
         }.execute();
     }
 
+    /**
+     * Xử lý sự kiện thêm mới.
+     */
     private void onAdd() {
         try {
             PlacementTestFormDialog dlg = new PlacementTestFormDialog((Frame) SwingUtilities.getWindowAncestor(this),
@@ -84,6 +103,9 @@ public class PlacementTestPanel extends JPanel {
         } catch (Exception ex) { JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage()); }
     }
 
+    /**
+     * Xử lý sự kiện sửa.
+     */
     private void onEdit() {
         int row = table.getSelectedRow();
         if (row < 0) { JOptionPane.showMessageDialog(this, "Chọn một bản ghi để sửa."); return; }
@@ -95,6 +117,9 @@ public class PlacementTestPanel extends JPanel {
         } catch (Exception ex) { JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage()); }
     }
 
+    /**
+     * Xử lý sự kiện xóa.
+     */
     private void onDelete() {
         int row = table.getSelectedRow();
         if (row < 0) { JOptionPane.showMessageDialog(this, "Chọn một bản ghi để xóa."); return; }

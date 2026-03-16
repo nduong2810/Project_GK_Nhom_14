@@ -14,9 +14,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * SRP: Chỉ chịu trách nhiệm cho Teacher nhập điểm.
- * OCP: calculateGrade dùng data-driven approach + Stream API,
- * dễ mở rộng thêm mức điểm mới mà không sửa logic.
+ * Lớp Service chuyên cho nghiệp vụ nhập điểm của giáo viên.
+ * SRP (Single Responsibility Principle): Lớp này chỉ chịu trách nhiệm cho các logic liên quan đến việc giáo viên nhập điểm.
+ * OCP (Open/Closed Principle): Việc tính toán xếp loại (calculateGrade) được thiết kế để dễ dàng mở rộng (thêm/sửa thang điểm)
+ * mà không cần sửa đổi mã nguồn của phương thức, nhờ vào việc sử dụng cấu trúc dữ liệu (GRADE_RULES) và Stream API.
  */
 public class GradeEntryService {
 
@@ -24,9 +25,9 @@ public class GradeEntryService {
     private final TransactionManager tx;
 
     /**
-     * OCP: Danh sách GradeRule — có thể thêm/sửa rule mà KHÔNG sửa logic
-     * calculateGrade.
-     * Sắp xếp từ cao → thấp (threshold giảm dần).
+     * OCP: Danh sách các quy tắc xếp loại (GradeRule).
+     * Dữ liệu này được tách biệt khỏi logic, cho phép thêm/sửa các mức điểm mà KHÔNG cần sửa phương thức `calculateGrade`.
+     * Các quy tắc phải được sắp xếp theo ngưỡng điểm (threshold) từ cao đến thấp.
      */
     private static final List<GradeRule> GRADE_RULES = List.of(
             new GradeRule(90, "A+"),
@@ -38,7 +39,10 @@ public class GradeEntryService {
             new GradeRule(50, "D+"),
             new GradeRule(40, "D"));
 
-    /** Record chứa threshold và grade label — OCP compliant */
+    /**
+     * Record để định nghĩa một quy tắc xếp loại, bao gồm ngưỡng điểm và nhãn xếp loại.
+     * Tuân thủ nguyên tắc OCP.
+     */
     private record GradeRule(double threshold, String grade) {
     }
 
@@ -48,8 +52,11 @@ public class GradeEntryService {
     }
 
     /**
-     * Lấy danh sách lớp Ongoing của giáo viên (chỉ cho phép nhập điểm lớp Ongoing).
-     * Dùng Stream filter + sorted.
+     * Lấy danh sách các lớp học đang diễn ra ('Ongoing') của một giáo viên.
+     * Chỉ cho phép nhập điểm cho các lớp đang diễn ra.
+     * @param teacherId ID của giáo viên.
+     * @return Danh sách ClassEntity đã được lọc và sắp xếp.
+     * @throws Exception nếu có lỗi giao dịch.
      */
     public List<ClassEntity> getOngoingClassesByTeacher(Long teacherId) throws Exception {
         return tx.runInTransaction(em -> {
@@ -62,8 +69,10 @@ public class GradeEntryService {
     }
 
     /**
-     * Lấy danh sách học viên đang enrolled trong một lớp.
-     * Sắp xếp theo tên bằng Stream API.
+     * Lấy danh sách học viên đang ghi danh ('Enrolled') trong một lớp.
+     * @param classId ID của lớp học.
+     * @return Danh sách Enrollment đã được sắp xếp theo tên học viên.
+     * @throws Exception nếu có lỗi giao dịch.
      */
     public List<Enrollment> getEnrolledStudents(Long classId) throws Exception {
         return tx.runInTransaction(em -> {
@@ -75,8 +84,10 @@ public class GradeEntryService {
     }
 
     /**
-     * Lấy kết quả đã có cho một lớp.
-     * Trả về Map: studentId → Result (dùng Stream Collectors.toMap).
+     * Lấy kết quả điểm đã nhập cho một lớp, trả về dưới dạng Map để tra cứu nhanh.
+     * @param classId ID của lớp học.
+     * @return Map với key là `studentId` và value là đối tượng `Result`.
+     * @throws Exception nếu có lỗi giao dịch.
      */
     public Map<Long, Result> getResultMap(Long classId) throws Exception {
         return tx.runInTransaction(em -> {
@@ -89,15 +100,16 @@ public class GradeEntryService {
     }
 
     /**
-     * Lưu/cập nhật điểm cho toàn bộ danh sách học viên của một lớp.
-     * Sử dụng Stream forEach để xử lý từng record.
-     * Tự động tính grade từ score bằng calculateGrade().
+     * Lưu hoặc cập nhật điểm cho một danh sách học viên của một lớp.
+     * Tự động tính toán xếp loại (grade) từ điểm số (score).
+     * @param classId ID của lớp học.
+     * @param records Danh sách các bản ghi điểm (dưới dạng `ResultRecord`).
+     * @throws Exception nếu có lỗi giao dịch.
+     * @throws IllegalStateException nếu lớp học không ở trạng thái 'Ongoing'.
      */
     public void saveResults(Long classId, List<ResultRecord> records) throws Exception {
         tx.runInTransaction(em -> {
-            Map<Long, Result> existingMap = resultRepo.findResultsByClassId(em, classId)
-                    .stream()
-                    .collect(Collectors.toMap(r -> r.getStudent().getStudentId(), r -> r));
+            Map<Long, Result> existingMap = getResultMap(classId);
 
             ClassEntity classEntity = em.find(ClassEntity.class, classId);
             if (classEntity.getStatus() != ClassEntity.Status.Ongoing) {
@@ -105,7 +117,7 @@ public class GradeEntryService {
                         "Lớp '" + classEntity.getClassName() + "' không ở trạng thái Ongoing. Không thể nhập điểm.");
             }
 
-            // Xử lý từng record bằng Stream forEach + lambda
+            // Xử lý từng bản ghi điểm, chỉ xử lý những bản ghi có điểm số không null.
             records.stream()
                     .filter(record -> record.score() != null)
                     .forEach(record -> {
@@ -113,12 +125,14 @@ public class GradeEntryService {
                         Result existing = existingMap.get(record.studentId());
 
                         if (existing != null) {
+                            // Nếu đã có điểm -> Cập nhật
                             existing.setScore(record.score());
                             existing.setGrade(grade);
                             existing.setComment(record.comment());
                             em.merge(existing);
                         } else {
-                            Student student = em.find(Student.class, record.studentId());
+                            // Nếu chưa có điểm -> Tạo mới
+                            Student student = em.getReference(Student.class, record.studentId());
                             Result result = new Result();
                             result.setStudent(student);
                             result.setClassEntity(classEntity);
@@ -133,12 +147,15 @@ public class GradeEntryService {
         });
     }
 
-    // ==================== OCP: Grade Calculation ====================
+    // ==================== OCP: Tính toán Xếp loại ====================
 
     /**
-     * OCP: Tính grade (xếp loại) từ điểm số theo thang điểm 100.
-     * Dùng data-driven approach + Stream API:
-     * - Thêm/sửa mức điểm mới chỉ cần thay đổi GRADE_RULES, KHÔNG sửa logic.
+     * OCP: Tính toán xếp loại (grade) từ điểm số (score) theo thang điểm 100.
+     * Sử dụng phương pháp data-driven và Stream API:
+     * Tìm quy tắc đầu tiên trong `GRADE_RULES` có ngưỡng điểm nhỏ hơn hoặc bằng điểm số của học viên.
+     * Nếu không tìm thấy quy tắc nào (điểm quá thấp), trả về "F".
+     * @param score Điểm số cần xếp loại.
+     * @return Chuỗi ký tự đại diện cho xếp loại (ví dụ: "A+", "B", "F").
      */
     public static String calculateGrade(BigDecimal score) {
         if (score == null)
@@ -148,11 +165,11 @@ public class GradeEntryService {
                 .filter(rule -> s >= rule.threshold())
                 .map(GradeRule::grade)
                 .findFirst()
-                .orElse("F");
+                .orElse("F"); // Mặc định là "F" nếu không đạt ngưỡng nào
     }
 
     /**
-     * Record class để chứa dữ liệu điểm từ UI.
+     * Record để đóng gói dữ liệu điểm nhận từ UI.
      */
     public record ResultRecord(Long studentId, BigDecimal score, String comment) {
     }

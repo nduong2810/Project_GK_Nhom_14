@@ -11,6 +11,9 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
 
+/**
+ * Lớp `PromotionFormDialog` tạo hộp thoại để thêm hoặc sửa thông tin khuyến mãi.
+ */
 public class PromotionFormDialog extends JDialog {
 
     private final JTextField txtName = new JTextField(25);
@@ -29,20 +32,20 @@ public class PromotionFormDialog extends JDialog {
         buildUI();
 
         if (existing != null) {
+            // Chế độ sửa
             this.promotion = existing;
             txtName.setText(existing.getPromoName());
             cboDiscountType.setSelectedItem(existing.getDiscountType());
             txtDiscountValue.setText(existing.getDiscountValue().toPlainString());
             if (existing.getStartDate() != null) {
-                dateStart.setDate(Date.from(existing.getStartDate()
-                        .atStartOfDay(ZoneId.systemDefault()).toInstant()));
+                dateStart.setDate(Date.from(existing.getStartDate().atStartOfDay(ZoneId.systemDefault()).toInstant()));
             }
             if (existing.getEndDate() != null) {
-                dateEnd.setDate(Date.from(existing.getEndDate()
-                        .atStartOfDay(ZoneId.systemDefault()).toInstant()));
+                dateEnd.setDate(Date.from(existing.getEndDate().atStartOfDay(ZoneId.systemDefault()).toInstant()));
             }
             cboStatus.setSelectedItem(existing.getStatus());
         } else {
+            // Chế độ thêm mới
             this.promotion = new Promotion();
             cboStatus.setSelectedItem(Promotion.Status.Active);
         }
@@ -51,6 +54,9 @@ public class PromotionFormDialog extends JDialog {
         setLocationRelativeTo(owner);
     }
 
+    /**
+     * Xây dựng giao diện người dùng.
+     */
     private void buildUI() {
         UITheme.styleDialog(this);
 
@@ -62,81 +68,37 @@ public class PromotionFormDialog extends JDialog {
         g.fill = GridBagConstraints.HORIZONTAL;
 
         int r = 0;
+        g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Tên KM (*):"), g);
+        g.gridx = 1; form.add(txtName, g);
 
-        // Tên khuyến mãi
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Tên KM (*):"), g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Loại giảm giá (*):"), g);
         g.gridx = 1;
-        form.add(txtName, g);
-
-        // Loại giảm giá
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Loại giảm giá (*):"), g);
-        g.gridx = 1;
-        cboDiscountType.setFont(UITheme.FONT_BODY);
-        cboDiscountType.setRenderer((list, value, index, isSelected, cellHasFocus) -> {
-            JLabel label = new JLabel();
-            label.setFont(UITheme.FONT_BODY);
-            label.setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
-            if (value == Promotion.DiscountType.Percent) {
-                label.setText("Phần trăm (%)");
-            } else if (value == Promotion.DiscountType.Amount) {
-                label.setText("Số tiền cố định (VNĐ)");
+        cboDiscountType.setRenderer(new DefaultListCellRenderer() {
+            public Component getListCellRendererComponent(JList<?> l, Object v, int i, boolean s, boolean f) {
+                super.getListCellRendererComponent(l, v, i, s, f);
+                if (v == Promotion.DiscountType.Percent) setText("Phần trăm (%)");
+                else if (v == Promotion.DiscountType.Amount) setText("Số tiền cố định (VNĐ)");
+                return this;
             }
-            if (isSelected) {
-                label.setBackground(list.getSelectionBackground());
-                label.setForeground(list.getSelectionForeground());
-                label.setOpaque(true);
-            }
-            return label;
         });
         form.add(cboDiscountType, g);
 
-        // Giá trị giảm
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Giá trị giảm (*):"), g);
-        g.gridx = 1;
-        form.add(txtDiscountValue, g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Giá trị giảm (*):"), g);
+        g.gridx = 1; form.add(txtDiscountValue, g);
 
-        // Ngày bắt đầu
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Ngày bắt đầu:"), g);
-        g.gridx = 1;
-        dateStart.setPreferredSize(new Dimension(200, UITheme.FIELD_HEIGHT));
-        dateStart.setDateFormatString("yyyy-MM-dd");
-        form.add(dateStart, g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Ngày bắt đầu:"), g);
+        g.gridx = 1; dateStart.setDateFormatString("yyyy-MM-dd"); form.add(dateStart, g);
 
-        // Ngày kết thúc
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Ngày kết thúc:"), g);
-        g.gridx = 1;
-        dateEnd.setPreferredSize(new Dimension(200, UITheme.FIELD_HEIGHT));
-        dateEnd.setDateFormatString("yyyy-MM-dd");
-        form.add(dateEnd, g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Ngày kết thúc:"), g);
+        g.gridx = 1; dateEnd.setDateFormatString("yyyy-MM-dd"); form.add(dateEnd, g);
 
-        // Trạng thái
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Trạng thái:"), g);
-        g.gridx = 1;
-        cboStatus.setFont(UITheme.FONT_BODY);
-        form.add(cboStatus, g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Trạng thái:"), g);
+        g.gridx = 1; form.add(cboStatus, g);
 
-        // Buttons
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actions.setOpaque(false);
         actions.setBorder(BorderFactory.createEmptyBorder(12, 0, 0, 0));
-        JButton btnSave = UITheme.createPrimaryButton("Lưu", "");
+        JButton btnSave = UITheme.createPrimaryButton("Lưu", "💾");
         JButton btnCancel = UITheme.createOutlineButton("Hủy");
         btnSave.addActionListener(e -> onSave());
         btnCancel.addActionListener(e -> dispose());
@@ -147,49 +109,33 @@ public class PromotionFormDialog extends JDialog {
         getContentPane().add(actions, BorderLayout.SOUTH);
     }
 
+    /**
+     * Xử lý sự kiện khi nhấn nút "Lưu".
+     */
     private void onSave() {
         try {
-            // Validate tên
-            if (txtName.getText().trim().isEmpty()) {
-                throw new IllegalArgumentException("Vui lòng nhập tên khuyến mãi.");
-            }
+            if (txtName.getText().trim().isEmpty()) throw new IllegalArgumentException("Vui lòng nhập tên khuyến mãi.");
 
-            // Validate giá trị giảm
             BigDecimal discountValue;
             try {
                 discountValue = new BigDecimal(txtDiscountValue.getText().trim());
-                if (discountValue.compareTo(BigDecimal.ZERO) <= 0) {
-                    throw new NumberFormatException();
-                }
+                if (discountValue.compareTo(BigDecimal.ZERO) <= 0) throw new NumberFormatException();
             } catch (NumberFormatException ex) {
                 throw new IllegalArgumentException("Giá trị giảm phải là số dương.");
             }
 
-            // Validate phần trăm không quá 100
             Promotion.DiscountType selectedType = (Promotion.DiscountType) cboDiscountType.getSelectedItem();
-            if (selectedType == Promotion.DiscountType.Percent
-                    && discountValue.compareTo(BigDecimal.valueOf(100)) > 0) {
+            if (selectedType == Promotion.DiscountType.Percent && discountValue.compareTo(BigDecimal.valueOf(100)) > 0) {
                 throw new IllegalArgumentException("Giảm theo phần trăm không được vượt quá 100%.");
             }
 
-            // Parse ngày
-            LocalDate startDate = null;
-            if (dateStart.getDate() != null) {
-                startDate = dateStart.getDate().toInstant()
-                        .atZone(ZoneId.systemDefault()).toLocalDate();
-            }
-            LocalDate endDate = null;
-            if (dateEnd.getDate() != null) {
-                endDate = dateEnd.getDate().toInstant()
-                        .atZone(ZoneId.systemDefault()).toLocalDate();
-            }
+            LocalDate startDate = (dateStart.getDate() != null) ? dateStart.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate() : null;
+            LocalDate endDate = (dateEnd.getDate() != null) ? dateEnd.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate() : null;
 
-            // Validate ngày kết thúc >= ngày bắt đầu
             if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
                 throw new IllegalArgumentException("Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.");
             }
 
-            // Set values
             promotion.setPromoName(txtName.getText().trim());
             promotion.setDiscountType(selectedType);
             promotion.setDiscountValue(discountValue);
@@ -204,11 +150,6 @@ public class PromotionFormDialog extends JDialog {
         }
     }
 
-    public boolean isSaved() {
-        return saved;
-    }
-
-    public Promotion getPromotion() {
-        return promotion;
-    }
+    public boolean isSaved() { return saved; }
+    public Promotion getPromotion() { return promotion; }
 }

@@ -9,6 +9,9 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 
+/**
+ * Lớp `CoursePanel` tạo giao diện quản lý các khóa học.
+ */
 public class CoursePanel extends JPanel {
     private final CourseService courseService;
     private final CourseTableModel tableModel = new CourseTableModel();
@@ -23,8 +26,11 @@ public class CoursePanel extends JPanel {
         loadData();
     }
 
+    /**
+     * Xây dựng giao diện người dùng.
+     */
     private void buildUI() {
-        // ===== Toolbar =====
+        // Thanh công cụ
         JPanel toolbar = UITheme.createToolbar();
         JButton btnAdd = UITheme.createSuccessButton("Thêm Mới", "➕");
         JButton btnEdit = UITheme.createPrimaryButton("Sửa", "✏️");
@@ -41,32 +47,37 @@ public class CoursePanel extends JPanel {
         toolbar.add(btnDelete);
         toolbar.add(btnRefresh);
 
-        JPanel searchPanel = UITheme.createSearchPanel(txtSearch);
+        // Panel tìm kiếm
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        searchPanel.setOpaque(false);
+        searchPanel.add(new JLabel("Tìm kiếm:"));
+        searchPanel.add(txtSearch);
 
         txtSearch.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) {
-                tableModel.setFilter(txtSearch.getText());
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                tableModel.setFilter(txtSearch.getText());
-            }
-
-            public void changedUpdate(DocumentEvent e) {
-                tableModel.setFilter(txtSearch.getText());
-            }
+            public void insertUpdate(DocumentEvent e) { tableModel.setFilter(txtSearch.getText()); }
+            public void removeUpdate(DocumentEvent e) { tableModel.setFilter(txtSearch.getText()); }
+            public void changedUpdate(DocumentEvent e) { tableModel.setFilter(txtSearch.getText()); }
         });
 
-        add(UITheme.createTopPanel(toolbar, searchPanel), BorderLayout.NORTH);
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setOpaque(false);
+        topPanel.add(toolbar, BorderLayout.WEST);
+        topPanel.add(searchPanel, BorderLayout.EAST);
 
+        add(topPanel, BorderLayout.NORTH);
+
+        // Bảng dữ liệu
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         add(UITheme.createStyledScrollPane(table), BorderLayout.CENTER);
     }
 
+    /**
+     * Tải dữ liệu khóa học bất đồng bộ bằng SwingWorker.
+     */
     private void loadData() {
-        new SwingWorker<java.util.List<vn.edu.ute.model.Course>, Void>() {
+        new SwingWorker<java.util.List<Course>, Void>() {
             @Override
-            protected java.util.List<vn.edu.ute.model.Course> doInBackground() throws Exception {
+            protected java.util.List<Course> doInBackground() throws Exception {
                 return courseService.getAllCourses();
             }
             @Override
@@ -80,9 +91,11 @@ public class CoursePanel extends JPanel {
         }.execute();
     }
 
+    /**
+     * Xử lý sự kiện thêm mới.
+     */
     private void onAdd() {
-        CourseFormDialog dlg = new CourseFormDialog((Frame) SwingUtilities.getWindowAncestor(this), "Thêm Khóa Học",
-                null);
+        CourseFormDialog dlg = new CourseFormDialog((Frame) SwingUtilities.getWindowAncestor(this), "Thêm Khóa Học", null);
         dlg.setVisible(true);
         if (dlg.isSaved()) {
             try {
@@ -94,14 +107,16 @@ public class CoursePanel extends JPanel {
         }
     }
 
+    /**
+     * Xử lý sự kiện sửa.
+     */
     private void onEdit() {
         int row = table.getSelectedRow();
         if (row < 0) {
             JOptionPane.showMessageDialog(this, "Chọn khóa học để sửa.");
             return;
         }
-        CourseFormDialog dlg = new CourseFormDialog((Frame) SwingUtilities.getWindowAncestor(this), "Sửa Khóa Học",
-                tableModel.getAt(row));
+        CourseFormDialog dlg = new CourseFormDialog((Frame) SwingUtilities.getWindowAncestor(this), "Sửa Khóa Học", tableModel.getAt(row));
         dlg.setVisible(true);
         if (dlg.isSaved()) {
             try {
@@ -113,6 +128,9 @@ public class CoursePanel extends JPanel {
         }
     }
 
+    /**
+     * Xử lý sự kiện xóa.
+     */
     private void onDelete() {
         int row = table.getSelectedRow();
         if (row < 0) {

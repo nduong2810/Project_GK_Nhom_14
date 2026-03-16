@@ -11,8 +11,8 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 
 /**
- * Panel quản lý thông báo cho Admin/Staff.
- * Cho phép tạo mới, xem, xóa thông báo, tìm kiếm.
+ * Lớp `NotificationPanel` tạo giao diện quản lý thông báo dành cho Admin/Staff.
+ * Cho phép tạo mới, xem, xóa thông báo và tìm kiếm.
  */
 public class NotificationPanel extends JPanel {
 
@@ -32,11 +32,14 @@ public class NotificationPanel extends JPanel {
         loadData();
     }
 
+    /**
+     * Xây dựng giao diện người dùng.
+     */
     private void buildUI() {
         JPanel toolbar = UITheme.createToolbar();
-        JButton btnAdd = UITheme.createSuccessButton("Tạo Thông Báo", "");
-        JButton btnDelete = UITheme.createDangerButton("Xóa", "");
-        JButton btnRefresh = UITheme.createNeutralButton("Làm Mới", "");
+        JButton btnAdd = UITheme.createSuccessButton("Tạo Thông Báo", "➕");
+        JButton btnDelete = UITheme.createDangerButton("Xóa", "🗑");
+        JButton btnRefresh = UITheme.createNeutralButton("Làm Mới", "🔄");
 
         btnAdd.addActionListener(e -> onAdd());
         btnDelete.addActionListener(e -> onDelete());
@@ -46,63 +49,54 @@ public class NotificationPanel extends JPanel {
         toolbar.add(btnDelete);
         toolbar.add(btnRefresh);
 
-        JPanel searchPanel = UITheme.createSearchPanel(txtSearch);
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        searchPanel.setOpaque(false);
+        searchPanel.add(new JLabel("Tìm kiếm:"));
+        searchPanel.add(txtSearch);
 
-        // Search listener dùng lambda
         txtSearch.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) {
-                tableModel.setFilter(txtSearch.getText());
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                tableModel.setFilter(txtSearch.getText());
-            }
-
-            public void changedUpdate(DocumentEvent e) {
-                tableModel.setFilter(txtSearch.getText());
-            }
+            public void insertUpdate(DocumentEvent e) { tableModel.setFilter(txtSearch.getText()); }
+            public void removeUpdate(DocumentEvent e) { tableModel.setFilter(txtSearch.getText()); }
+            public void changedUpdate(DocumentEvent e) { tableModel.setFilter(txtSearch.getText()); }
         });
 
-        add(UITheme.createTopPanel(toolbar, searchPanel), BorderLayout.NORTH);
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setOpaque(false);
+        topPanel.add(toolbar, BorderLayout.WEST);
+        topPanel.add(searchPanel, BorderLayout.EAST);
+
+        add(topPanel, BorderLayout.NORTH);
 
         // Bảng thông báo
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         UITheme.styleTable(table);
-
-        // Khi chọn row → hiện nội dung preview (dùng lambda)
         table.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 int row = table.getSelectedRow();
-                if (row >= 0) {
-                    Notification n = tableModel.getAt(row);
-                    txtPreview.setText(n != null ? n.getContent() : "");
-                } else {
-                    txtPreview.setText("");
-                }
+                txtPreview.setText(row >= 0 ? tableModel.getAt(row).getContent() : "");
             }
         });
 
-        // Panel preview nội dung
+        // Panel xem trước nội dung
         txtPreview.setEditable(false);
         txtPreview.setLineWrap(true);
         txtPreview.setWrapStyleWord(true);
-        txtPreview.setFont(UITheme.FONT_BODY);
         JScrollPane previewScroll = new JScrollPane(txtPreview);
         previewScroll.setBorder(BorderFactory.createTitledBorder("Nội dung thông báo"));
-        previewScroll.setPreferredSize(new Dimension(0, 120));
 
-        // Split layout: table trên, preview dưới
+        // Chia layout
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
                 UITheme.createStyledScrollPane(table), previewScroll);
         splitPane.setResizeWeight(0.7);
-        splitPane.setDividerSize(5);
         add(splitPane, BorderLayout.CENTER);
     }
 
+    /**
+     * Tải dữ liệu thông báo bất đồng bộ.
+     */
     private void loadData() {
-        new SwingWorker<java.util.List<vn.edu.ute.model.Notification>, Void>() {
+        new SwingWorker<java.util.List<Notification>, Void>() {
             @Override
-            protected java.util.List<vn.edu.ute.model.Notification> doInBackground() throws Exception {
+            protected java.util.List<Notification> doInBackground() throws Exception {
                 return notificationService.getAllNotifications();
             }
             @Override
@@ -111,13 +105,16 @@ public class NotificationPanel extends JPanel {
                     tableModel.setData(get());
                     txtPreview.setText("");
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(NotificationPanel.this, "Lỗi tải dữ liệu thông báo: " + ex.getMessage(),
+                    JOptionPane.showMessageDialog(NotificationPanel.this, "Lỗi tải dữ liệu: " + ex.getMessage(),
                             "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }.execute();
     }
 
+    /**
+     * Xử lý sự kiện thêm mới.
+     */
     private void onAdd() {
         NotificationFormDialog dlg = new NotificationFormDialog(
                 (Frame) SwingUtilities.getWindowAncestor(this), "Tạo Thông Báo Mới");
@@ -133,15 +130,18 @@ public class NotificationPanel extends JPanel {
         }
     }
 
+    /**
+     * Xử lý sự kiện xóa.
+     */
     private void onDelete() {
         int selectedRow = table.getSelectedRow();
         if (selectedRow < 0) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn một thông báo trong bảng để xóa.");
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một thông báo để xóa.");
             return;
         }
         Notification selected = tableModel.getAt(selectedRow);
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Bạn có chắc chắn muốn xóa thông báo: \"" + selected.getTitle() + "\"?",
+                "Bạn có chắc muốn xóa thông báo: \"" + selected.getTitle() + "\"?",
                 "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
             try {

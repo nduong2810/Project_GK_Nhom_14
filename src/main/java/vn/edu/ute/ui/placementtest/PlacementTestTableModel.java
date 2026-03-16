@@ -7,6 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Lớp `PlacementTestTableModel` là mô hình dữ liệu cho JTable hiển thị kết quả thi xếp lớp.
+ */
 public class PlacementTestTableModel extends AbstractTableModel {
     private final String[] columns = {"ID", "Tên Học Viên", "Ngày Thi", "Điểm Số", "Trình Độ Gợi Ý", "Ghi Chú"};
     private List<PlacementTest> data = new ArrayList<>();
@@ -14,16 +17,25 @@ public class PlacementTestTableModel extends AbstractTableModel {
     private String filterKeyword = "";
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
+    /**
+     * Cập nhật dữ liệu cho model.
+     */
     public void setData(List<PlacementTest> data) {
         this.data = data;
         applyFilter();
     }
 
+    /**
+     * Thiết lập từ khóa lọc.
+     */
     public void setFilter(String keyword) {
         this.filterKeyword = keyword != null ? keyword.trim().toLowerCase() : "";
         applyFilter();
     }
 
+    /**
+     * Áp dụng bộ lọc.
+     */
     private void applyFilter() {
         if (filterKeyword.isEmpty()) {
             filteredData = new ArrayList<>(data);
@@ -35,6 +47,9 @@ public class PlacementTestTableModel extends AbstractTableModel {
         fireTableDataChanged();
     }
 
+    /**
+     * Lấy kết quả thi tại một hàng.
+     */
     public PlacementTest getAt(int row) {
         if (row < 0 || row >= filteredData.size()) return null;
         return filteredData.get(row);

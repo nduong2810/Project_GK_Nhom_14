@@ -11,6 +11,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+/**
+ * Lớp `EnrollmentFormDialog` tạo hộp thoại để thêm hoặc sửa thông tin ghi danh.
+ */
 public class EnrollmentFormDialog extends JDialog {
     private final JComboBox<Student> cboStudent = new JComboBox<>();
     private final JComboBox<ClassEntity> cboClass = new JComboBox<>();
@@ -26,24 +29,21 @@ public class EnrollmentFormDialog extends JDialog {
         super(owner, title, true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
-        for (Student s : students)
-            cboStudent.addItem(s);
-        for (ClassEntity c : classes)
-            cboClass.addItem(c);
+        students.forEach(cboStudent::addItem);
+        classes.forEach(cboClass::addItem);
 
         setupComboBoxRenderers();
         buildUI();
 
         if (existing != null) {
-            if (existing.getStudent() != null)
-                setComboSelection(cboStudent, existing.getStudent().getStudentId());
-            if (existing.getClassEntity() != null)
-                setComboSelection(cboClass, existing.getClassEntity().getClassId());
-            txtEnrollmentDate.setText(
-                    existing.getEnrollmentDate() != null ? existing.getEnrollmentDate().format(dateFormatter) : "");
-            cboStatus.setSelectedItem(existing.getStatus());
+            // Chế độ sửa
             this.enrollment = existing;
+            if (existing.getStudent() != null) setComboSelection(cboStudent, existing.getStudent().getStudentId());
+            if (existing.getClassEntity() != null) setComboSelection(cboClass, existing.getClassEntity().getClassId());
+            txtEnrollmentDate.setText(existing.getEnrollmentDate() != null ? existing.getEnrollmentDate().format(dateFormatter) : "");
+            cboStatus.setSelectedItem(existing.getStatus());
         } else {
+            // Chế độ thêm mới
             this.enrollment = new Enrollment();
             txtEnrollmentDate.setText(LocalDate.now().format(dateFormatter));
             cboStatus.setSelectedItem(Enrollment.Status.Enrolled);
@@ -52,46 +52,42 @@ public class EnrollmentFormDialog extends JDialog {
         setLocationRelativeTo(owner);
     }
 
+    /**
+     * Tùy chỉnh hiển thị cho các ComboBox.
+     */
     private void setupComboBoxRenderers() {
         cboStudent.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
-                    boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value instanceof Student s)
-                    setText(s.getFullName() + " - " + (s.getPhone() != null ? s.getPhone() : "N/A"));
+            public Component getListCellRendererComponent(JList<?> l, Object v, int i, boolean s, boolean f) {
+                super.getListCellRendererComponent(l, v, i, s, f);
+                if (v instanceof Student st) setText(st.getFullName());
                 return this;
             }
         });
         cboClass.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
-                    boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value instanceof ClassEntity c)
-                    setText(c.getClassName());
+            public Component getListCellRendererComponent(JList<?> l, Object v, int i, boolean s, boolean f) {
+                super.getListCellRendererComponent(l, v, i, s, f);
+                if (v instanceof ClassEntity c) setText(c.getClassName());
                 return this;
             }
         });
     }
 
+    /**
+     * Tiện ích chọn item trong ComboBox theo ID.
+     */
     private void setComboSelection(JComboBox<?> combo, Long idTarget) {
         for (int i = 0; i < combo.getItemCount(); i++) {
             Object item = combo.getItemAt(i);
-            if (item instanceof Student && ((Student) item).getStudentId().equals(idTarget)) {
-                combo.setSelectedIndex(i);
-                return;
-            }
-            if (item instanceof ClassEntity && ((ClassEntity) item).getClassId().equals(idTarget)) {
-                combo.setSelectedIndex(i);
-                return;
-            }
+            if (item instanceof Student s && s.getStudentId().equals(idTarget)) { combo.setSelectedIndex(i); return; }
+            if (item instanceof ClassEntity c && c.getClassId().equals(idTarget)) { combo.setSelectedIndex(i); return; }
         }
     }
 
+    /**
+     * Xây dựng giao diện người dùng.
+     */
     private void buildUI() {
         UITheme.styleDialog(this);
-
         JPanel form = new JPanel(new GridBagLayout());
         form.setOpaque(false);
         GridBagConstraints g = new GridBagConstraints();
@@ -100,29 +96,14 @@ public class EnrollmentFormDialog extends JDialog {
         g.fill = GridBagConstraints.HORIZONTAL;
 
         int r = 0;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Học Viên (*):"), g);
-        g.gridx = 1;
-        form.add(cboStudent, g);
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Lớp Học (*):"), g);
-        g.gridx = 1;
-        form.add(cboClass, g);
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Ngày Ghi Danh:"), g);
-        g.gridx = 1;
-        form.add(txtEnrollmentDate, g);
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Trạng Thái:"), g);
-        g.gridx = 1;
-        form.add(cboStatus, g);
+        g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Học Viên (*):"), g);
+        g.gridx = 1; form.add(cboStudent, g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Lớp Học (*):"), g);
+        g.gridx = 1; form.add(cboClass, g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Ngày Ghi Danh:"), g);
+        g.gridx = 1; form.add(txtEnrollmentDate, g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Trạng Thái:"), g);
+        g.gridx = 1; form.add(cboStatus, g);
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actions.setOpaque(false);
@@ -138,14 +119,15 @@ public class EnrollmentFormDialog extends JDialog {
         getContentPane().add(actions, BorderLayout.SOUTH);
     }
 
+    /**
+     * Xử lý sự kiện khi nhấn nút "Lưu".
+     */
     private void onSave() {
         try {
             Student selectedStudent = (Student) cboStudent.getSelectedItem();
-            if (selectedStudent == null)
-                throw new IllegalArgumentException("Vui lòng chọn học viên.");
+            if (selectedStudent == null) throw new IllegalArgumentException("Vui lòng chọn học viên.");
             ClassEntity selectedClass = (ClassEntity) cboClass.getSelectedItem();
-            if (selectedClass == null)
-                throw new IllegalArgumentException("Vui lòng chọn lớp học.");
+            if (selectedClass == null) throw new IllegalArgumentException("Vui lòng chọn lớp học.");
             LocalDate enDate;
             try {
                 enDate = LocalDate.parse(txtEnrollmentDate.getText().trim(), dateFormatter);
@@ -164,11 +146,6 @@ public class EnrollmentFormDialog extends JDialog {
         }
     }
 
-    public boolean isSaved() {
-        return saved;
-    }
-
-    public Enrollment getEnrollment() {
-        return enrollment;
-    }
+    public boolean isSaved() { return saved; }
+    public Enrollment getEnrollment() { return enrollment; }
 }

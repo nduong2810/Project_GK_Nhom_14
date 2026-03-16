@@ -6,11 +6,15 @@ import javax.swing.table.AbstractTableModel;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
+/**
+ * Lớp `InvoiceTableModel` là mô hình dữ liệu cho JTable hiển thị thông tin hóa đơn.
+ * Nó tính toán và hiển thị các thông tin phái sinh như "Còn Thiếu".
+ */
 public class InvoiceTableModel extends AbstractTableModel {
     private final String[] columns = { "ID", "Học Viên", "Tổng Tiền", "Còn Thiếu", "Khuyến Mãi", "Ngày Xuất",
-            "Trạng Thái",
-            "Ghi Chú" };
+            "Trạng Thái", "Ghi Chú" };
     private List<Invoice> data = new ArrayList<>();
     private List<Invoice> filteredData = new ArrayList<>();
     private Map<Long, BigDecimal> paidAmounts = new HashMap<>();
@@ -18,7 +22,9 @@ public class InvoiceTableModel extends AbstractTableModel {
     private String filterKeyword = "";
 
     /**
-     * Cập nhật dữ liệu hóa đơn kèm map số tiền đã thanh toán.
+     * Cập nhật dữ liệu cho model.
+     * @param data Danh sách hóa đơn.
+     * @param paidAmounts Map chứa tổng số tiền đã thanh toán cho mỗi hóa đơn.
      */
     public void setData(List<Invoice> data, Map<Long, BigDecimal> paidAmounts) {
         this.data = data;
@@ -27,7 +33,7 @@ public class InvoiceTableModel extends AbstractTableModel {
     }
 
     /**
-     * Đặt từ khóa tìm kiếm (lọc theo tên học viên hoặc ID hóa đơn).
+     * Thiết lập từ khóa tìm kiếm.
      */
     public void setFilter(String keyword) {
         this.filterKeyword = keyword != null ? keyword.trim().toLowerCase() : "";
@@ -35,7 +41,7 @@ public class InvoiceTableModel extends AbstractTableModel {
     }
 
     /**
-     * Áp dụng bộ lọc lên data gốc → filteredData (dùng Stream API).
+     * Áp dụng bộ lọc vào dữ liệu.
      */
     private void applyFilter() {
         if (filterKeyword.isEmpty()) {
@@ -49,11 +55,14 @@ public class InvoiceTableModel extends AbstractTableModel {
                         String idStr = String.valueOf(inv.getInvoiceId());
                         return studentName.contains(filterKeyword) || idStr.contains(filterKeyword);
                     })
-                    .collect(java.util.stream.Collectors.toList());
+                    .collect(Collectors.toList());
         }
         fireTableDataChanged();
     }
 
+    /**
+     * Lấy hóa đơn tại một hàng.
+     */
     public Invoice getAt(int row) {
         return (row >= 0 && row < filteredData.size()) ? filteredData.get(row) : null;
     }
@@ -78,40 +87,28 @@ public class InvoiceTableModel extends AbstractTableModel {
         Invoice inv = filteredData.get(rowIndex);
         BigDecimal paid = paidAmounts.getOrDefault(inv.getInvoiceId(), BigDecimal.ZERO);
         BigDecimal remaining = inv.getTotalAmount().subtract(paid);
-        // Không cho hiện số âm
-        if (remaining.compareTo(BigDecimal.ZERO) < 0)
+        // Không hiển thị số tiền còn thiếu là số âm (trường hợp trả dư)
+        if (remaining.compareTo(BigDecimal.ZERO) < 0) {
             remaining = BigDecimal.ZERO;
+        }
 
         switch (columnIndex) {
-            case 0:
-                return inv.getInvoiceId();
-            case 1:
-                return inv.getStudent() != null ? inv.getStudent().getFullName() : "";
-            case 2:
-                return currencyFmt.format(inv.getTotalAmount());
-            case 3:
-                return currencyFmt.format(remaining);
-            case 4:
-                return inv.getPromotion() != null ? inv.getPromotion().getPromoName() : "—";
-            case 5:
-                return inv.getIssueDate() != null ? inv.getIssueDate().toString() : "";
-            case 6:
-                switch (inv.getStatus()) {
-                    case Draft:
-                        return "Nháp";
-                    case Issued:
-                        return "Đã xuất";
-                    case Paid:
-                        return "Đã thanh toán";
-                    case Cancelled:
-                        return "Đã hủy";
-                    default:
-                        return inv.getStatus().name();
-                }
-            case 7:
-                return inv.getNote() != null ? inv.getNote() : "";
-            default:
-                return "";
+            case 0: return inv.getInvoiceId();
+            case 1: return inv.getStudent() != null ? inv.getStudent().getFullName() : "";
+            case 2: return currencyFmt.format(inv.getTotalAmount());
+            case 3: return currencyFmt.format(remaining);
+            case 4: return inv.getPromotion() != null ? inv.getPromotion().getPromoName() : "—";
+            case 5: return inv.getIssueDate() != null ? inv.getIssueDate().toString() : "";
+            case 6: // Chuyển đổi Enum thành chuỗi tiếng Việt dễ hiểu
+                return switch (inv.getStatus()) {
+                    case Draft -> "Nháp";
+                    case Issued -> "Đã xuất";
+                    case Paid -> "Đã thanh toán";
+                    case Cancelled -> "Đã hủy";
+                    default -> inv.getStatus().name();
+                };
+            case 7: return inv.getNote() != null ? inv.getNote() : "";
+            default: return "";
         }
     }
 }

@@ -6,8 +6,16 @@ import vn.edu.ute.repo.EnrollmentRepository;
 
 import java.util.List;
 
+/**
+ * Lớp triển khai của EnrollmentRepository sử dụng JPA.
+ * Cung cấp logic cụ thể để tương tác với cơ sở dữ liệu cho các đối tượng Enrollment.
+ */
 public class JpaEnrollmentRepository implements EnrollmentRepository {
 
+    /**
+     * {@inheritDoc}
+     * Tải sẵn thông tin học viên, lớp học và khóa học để tối ưu hóa.
+     */
     @Override
     public List<Enrollment> findAll(EntityManager em) {
         return em.createQuery(
@@ -20,19 +28,31 @@ public class JpaEnrollmentRepository implements EnrollmentRepository {
                 .getResultList();
     }
 
+    /**
+     * {@inheritDoc}
+     * Tải sẵn thông tin liên quan khi tìm theo ID.
+     */
     @Override
     public Enrollment findById(EntityManager em, Long id) {
-        return em.createQuery(
-                        "SELECT e FROM Enrollment e " +
-                                "JOIN FETCH e.student " +
-                                "JOIN FETCH e.classEntity ce " +
-                                "JOIN FETCH ce.course " +
-                                "WHERE e.enrollmentId = :id",
-                        Enrollment.class)
-                .setParameter("id", id)
-                .getSingleResult();
+        try {
+            return em.createQuery(
+                            "SELECT e FROM Enrollment e " +
+                                    "JOIN FETCH e.student " +
+                                    "JOIN FETCH e.classEntity ce " +
+                                    "JOIN FETCH ce.course " +
+                                    "WHERE e.enrollmentId = :id",
+                            Enrollment.class)
+                    .setParameter("id", id)
+                    .getSingleResult();
+        } catch (jakarta.persistence.NoResultException e) {
+            return null; // Trả về null nếu không tìm thấy
+        }
     }
 
+    /**
+     * {@inheritDoc}
+     * Lọc theo `studentId` và tải sẵn thông tin lớp, khóa học.
+     */
     @Override
     public List<Enrollment> findByStudentId(EntityManager em, Long studentId) {
         return em.createQuery(
@@ -46,13 +66,14 @@ public class JpaEnrollmentRepository implements EnrollmentRepository {
                 .getResultList();
     }
 
+    /**
+     * {@inheritDoc}
+     * Tìm các bản ghi ghi danh đang ở trạng thái 'Enrolled' và chưa có hóa đơn nào đang hoạt động
+     * (Issued, Paid, Draft) được liên kết với nó.
+     * Câu truy vấn con `NOT EXISTS` được sử dụng để kiểm tra sự tồn tại của hóa đơn.
+     */
     @Override
     public List<Enrollment> findEnrolledWithoutInvoice(EntityManager em) {
-        // Loại enrollment nếu đã có invoice active (Issued/Paid/Draft) cho enrollment đó.
-        // Kiểm tra 2 cách để cover cả hóa đơn cũ (không có enrollment_id) và mới:
-        //   C1: inv.enrollment = e  (hóa đơn có enrollment_id trực tiếp)
-        //   C2: inv.student = e.student AND có payment liên kết enrollment này
-        //       (hóa đơn cũ tạo trước khi có cột enrollment_id)
         return em.createQuery(
                 "SELECT e FROM Enrollment e " +
                         "JOIN FETCH e.student " +
@@ -61,30 +82,33 @@ public class JpaEnrollmentRepository implements EnrollmentRepository {
                         "WHERE e.status = :status " +
                         "AND NOT EXISTS (" +
                         "  SELECT inv FROM Invoice inv " +
-                        "  WHERE inv.status <> :cancelled " +
-                        "  AND (" +
-                        "    inv.enrollment = e " +
-                        "    OR (inv.student = e.student AND EXISTS (" +
-                        "          SELECT p FROM Payment p " +
-                        "          WHERE p.invoice = inv AND p.enrollment = e" +
-                        "        ))" +
-                        "  )" +
+                        "  WHERE inv.enrollment = e AND inv.status <> :cancelled" +
                         ")",
                 Enrollment.class)
                 .setParameter("status", Enrollment.Status.Enrolled)
                 .setParameter("cancelled", vn.edu.ute.model.Invoice.Status.Cancelled)
                 .getResultList();
     }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void save(EntityManager em, Enrollment enrollment) {
         em.persist(enrollment);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void update(EntityManager em, Enrollment enrollment) {
         em.merge(enrollment);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void delete(EntityManager em, Long id) {
         Enrollment e = em.find(Enrollment.class, id);

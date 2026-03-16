@@ -5,7 +5,8 @@ import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 
 /**
- * Màn hình đăng nhập hiện đại với gradient background và card trung tâm bo góc.
+ * Lớp LoginView tạo ra giao diện màn hình đăng nhập cho ứng dụng.
+ * Giao diện được thiết kế hiện đại với nền gradient và một "thẻ" (card) ở trung tâm được bo góc.
  */
 public class LoginView extends JFrame {
     private JTextField usernameField;
@@ -17,16 +18,17 @@ public class LoginView extends JFrame {
         setTitle("Đăng Nhập - Trung Tâm Ngoại Ngữ");
         setSize(480, 420);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
+        setLocationRelativeTo(null); // Hiển thị cửa sổ ở giữa màn hình
         setResizable(false);
 
-        // Main panel with gradient background
+        // Panel chính với nền gradient
         JPanel backgroundPanel = new JPanel(new GridBagLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                // Tạo một màu gradient chuyển từ xanh đậm sang xanh nhạt
                 GradientPaint gp = new GradientPaint(
                         0, 0, new Color(30, 58, 138),
                         getWidth(), getHeight(), new Color(59, 130, 246));
@@ -36,18 +38,19 @@ public class LoginView extends JFrame {
             }
         };
 
-        // Card (white box in center)
+        // "Thẻ" đăng nhập màu trắng ở trung tâm
         JPanel card = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(Color.WHITE);
+                // Vẽ một hình chữ nhật bo góc
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 20, 20));
                 g2.dispose();
             }
         };
-        card.setOpaque(false);
+        card.setOpaque(false); // Làm cho panel trong suốt để nền gradient có thể nhìn thấy
         card.setLayout(new GridBagLayout());
         card.setPreferredSize(new Dimension(380, 340));
 
@@ -56,7 +59,7 @@ public class LoginView extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridwidth = 2;
 
-        // ===== Logo / Title =====
+        // ===== Logo và Tiêu đề =====
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.insets = new Insets(15, 25, 2, 25);
@@ -78,7 +81,7 @@ public class LoginView extends JFrame {
         subtitleLabel.setForeground(UITheme.NEUTRAL_400);
         card.add(subtitleLabel, gbc);
 
-        // ===== Username =====
+        // ===== Trường nhập Tên đăng nhập =====
         gbc.gridwidth = 1;
         gbc.gridy = 3;
         gbc.gridx = 0;
@@ -95,7 +98,7 @@ public class LoginView extends JFrame {
         usernameField.putClientProperty("JTextField.placeholderText", "Nhập tên đăng nhập");
         card.add(usernameField, gbc);
 
-        // ===== Password =====
+        // ===== Trường nhập Mật khẩu =====
         gbc.gridy = 5;
         gbc.insets = new Insets(3, 25, 2, 25);
         JLabel passLabel = UITheme.createFormLabel("Mật khẩu");
@@ -109,7 +112,7 @@ public class LoginView extends JFrame {
         passwordField.putClientProperty("JTextField.placeholderText", "Nhập mật khẩu");
         card.add(passwordField, gbc);
 
-        // ===== Forgot Password =====
+        // ===== Nút "Quên mật khẩu" =====
         gbc.gridy = 7;
         gbc.insets = new Insets(0, 25, 5, 25);
         gbc.fill = GridBagConstraints.NONE;
@@ -126,7 +129,7 @@ public class LoginView extends JFrame {
                 JOptionPane.INFORMATION_MESSAGE));
         card.add(forgotPasswordButton, gbc);
 
-        // ===== Login Button =====
+        // ===== Nút Đăng nhập =====
         gbc.gridy = 8;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.CENTER;
@@ -151,11 +154,12 @@ public class LoginView extends JFrame {
         });
         card.add(loginButton, gbc);
 
-        // Add card to background
+        // Thêm thẻ vào nền
         backgroundPanel.add(card);
         setContentPane(backgroundPanel);
     }
 
+    // Getters để Controller có thể truy cập các thành phần UI
     public JTextField getUsernameField() {
         return usernameField;
     }

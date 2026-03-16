@@ -6,8 +6,18 @@ import vn.edu.ute.repo.ScheduleRepository;
 
 import java.util.List;
 
+/**
+ * Lớp triển khai của ScheduleRepository sử dụng JPA.
+ * Cung cấp logic cụ thể để truy vấn dữ liệu lịch học.
+ */
 public class JpaScheduleRepository implements ScheduleRepository {
 
+    /**
+     * {@inheritDoc}
+     * Sử dụng JOIN FETCH để tải sẵn tất cả các thông tin liên quan (lớp, khóa học, giáo viên, phòng, chi nhánh)
+     * để tránh lỗi LazyInitializationException và vấn đề N+1 query.
+     * `DISTINCT` được dùng để tránh các bản ghi trùng lặp có thể phát sinh từ các join.
+     */
     @Override
     public List<Schedule> findAll(EntityManager em) {
         return em.createQuery(
@@ -23,6 +33,10 @@ public class JpaScheduleRepository implements ScheduleRepository {
                 .getResultList();
     }
 
+    /**
+     * {@inheritDoc}
+     * Lọc lịch học theo `teacherId` và tải sẵn các thông tin liên quan.
+     */
     @Override
     public List<Schedule> findByTeacherId(EntityManager em, Long teacherId) {
         return em.createQuery(
@@ -40,6 +54,12 @@ public class JpaScheduleRepository implements ScheduleRepository {
                 .getResultList();
     }
 
+    /**
+     * {@inheritDoc}
+     * Lọc lịch học theo `studentId` bằng cách join qua bảng `enrollments`.
+     * Chỉ lấy lịch của các lớp mà học viên đang có trạng thái `Enrolled`.
+     * `DISTINCT` rất quan trọng ở đây để đảm bảo mỗi buổi học chỉ xuất hiện một lần.
+     */
     @Override
     public List<Schedule> findByStudentId(EntityManager em, Long studentId) {
         return em.createQuery(

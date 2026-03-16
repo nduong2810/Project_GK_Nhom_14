@@ -6,8 +6,16 @@ import vn.edu.ute.repo.PaymentRepository;
 
 import java.util.List;
 
+/**
+ * Lớp triển khai của PaymentRepository sử dụng JPA.
+ * Cung cấp logic cụ thể để tương tác với cơ sở dữ liệu cho các đối tượng Payment.
+ */
 public class JpaPaymentRepository implements PaymentRepository {
 
+    /**
+     * {@inheritDoc}
+     * Tải sẵn thông tin học viên và sắp xếp theo ngày thanh toán mới nhất.
+     */
     @Override
     public List<Payment> findAll(EntityManager em) {
         return em.createQuery(
@@ -15,11 +23,19 @@ public class JpaPaymentRepository implements PaymentRepository {
                 .getResultList();
     }
 
+    /**
+     * {@inheritDoc}
+     * Triển khai bằng phương thức `find` của EntityManager.
+     */
     @Override
     public Payment findById(EntityManager em, Long id) {
         return em.find(Payment.class, id);
     }
 
+    /**
+     * {@inheritDoc}
+     * Lọc các thanh toán theo `invoiceId`.
+     */
     @Override
     public List<Payment> findByInvoiceId(EntityManager em, Long invoiceId) {
         return em.createQuery(
@@ -28,6 +44,10 @@ public class JpaPaymentRepository implements PaymentRepository {
                 .getResultList();
     }
 
+    /**
+     * {@inheritDoc}
+     * Lọc các thanh toán theo `studentId`.
+     */
     @Override
     public List<Payment> findByStudentId(EntityManager em, Long studentId) {
         return em.createQuery(
@@ -36,6 +56,10 @@ public class JpaPaymentRepository implements PaymentRepository {
                 .getResultList();
     }
 
+    /**
+     * {@inheritDoc}
+     * Triển khai bằng phương thức `persist` của EntityManager.
+     */
     @Override
     public void save(EntityManager em, Payment payment) {
         em.persist(payment);

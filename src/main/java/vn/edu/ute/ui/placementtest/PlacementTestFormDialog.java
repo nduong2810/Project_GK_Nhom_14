@@ -11,6 +11,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+/**
+ * Lớp `PlacementTestFormDialog` tạo hộp thoại để thêm hoặc sửa kết quả thi xếp lớp.
+ */
 public class PlacementTestFormDialog extends JDialog {
     private final JComboBox<Student> cboStudent = new JComboBox<>();
     private final JTextField txtTestDate = new JTextField(15);
@@ -26,18 +29,20 @@ public class PlacementTestFormDialog extends JDialog {
         super(owner, title, true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
-        for (Student s : students) cboStudent.addItem(s);
+        students.forEach(cboStudent::addItem);
         setupComboBoxRenderer();
         buildUI();
 
         if (existing != null) {
+            // Chế độ sửa
+            this.placementTest = existing;
             if (existing.getStudent() != null) setStudentSelection(existing.getStudent().getStudentId());
             txtTestDate.setText(existing.getTestDate() != null ? existing.getTestDate().format(dateFormatter) : "");
             txtScore.setText(existing.getScore() != null ? existing.getScore().toString() : "");
             cboLevel.setSelectedItem(existing.getSuggestedLevel());
             txtNote.setText(existing.getNote());
-            this.placementTest = existing;
         } else {
+            // Chế độ thêm mới
             this.placementTest = new PlacementTest();
             txtTestDate.setText(LocalDate.now().format(dateFormatter));
             cboLevel.setSelectedItem(PlacementTest.SuggestedLevel.Beginner);
@@ -47,30 +52,36 @@ public class PlacementTestFormDialog extends JDialog {
         setLocationRelativeTo(owner);
     }
 
+    /**
+     * Tùy chỉnh hiển thị cho ComboBox học viên.
+     */
     private void setupComboBoxRenderer() {
         cboStudent.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value instanceof Student) {
-                    Student s = (Student) value;
-                    setText(s.getFullName() + " - " + (s.getPhone() != null ? s.getPhone() : "N/A"));
-                }
+            public Component getListCellRendererComponent(JList<?> l, Object v, int i, boolean s, boolean f) {
+                super.getListCellRendererComponent(l, v, i, s, f);
+                if (v instanceof Student st) setText(st.getFullName());
                 return this;
             }
         });
     }
 
+    /**
+     * Tiện ích chọn học viên trong ComboBox theo ID.
+     */
     private void setStudentSelection(Long studentId) {
         for (int i = 0; i < cboStudent.getItemCount(); i++) {
-            Student s = cboStudent.getItemAt(i);
-            if (s.getStudentId().equals(studentId)) { cboStudent.setSelectedIndex(i); break; }
+            if (cboStudent.getItemAt(i).getStudentId().equals(studentId)) {
+                cboStudent.setSelectedIndex(i);
+                break;
+            }
         }
     }
 
+    /**
+     * Xây dựng giao diện người dùng.
+     */
     private void buildUI() {
         UITheme.styleDialog(this);
-
         JPanel form = new JPanel(new GridBagLayout());
         form.setOpaque(false);
         GridBagConstraints g = new GridBagConstraints();
@@ -81,32 +92,22 @@ public class PlacementTestFormDialog extends JDialog {
         int r = 0;
         g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Học Viên (*):"), g);
         g.gridx = 1; form.add(cboStudent, g);
-
-        r++;
-        g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Ngày Thi (dd/MM/yyyy):"), g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Ngày Thi (dd/MM/yyyy):"), g);
         g.gridx = 1; form.add(txtTestDate, g);
-
-        r++;
-        g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Điểm Số:"), g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Điểm Số:"), g);
         g.gridx = 1; form.add(txtScore, g);
-
-        r++;
-        g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Trình Độ Gợi Ý:"), g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Trình Độ Gợi Ý:"), g);
         g.gridx = 1; form.add(cboLevel, g);
-
-        r++;
-        g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Ghi Chú:"), g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Ghi Chú:"), g);
         g.gridx = 1; form.add(txtNote, g);
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actions.setOpaque(false);
         actions.setBorder(BorderFactory.createEmptyBorder(12, 0, 0, 0));
-
-        JButton btnSave = UITheme.createPrimaryButton("Lưu", "");
+        JButton btnSave = UITheme.createPrimaryButton("Lưu", "💾");
         JButton btnCancel = UITheme.createOutlineButton("Hủy");
         btnSave.addActionListener(e -> onSave());
         btnCancel.addActionListener(e -> dispose());
-
         actions.add(btnSave);
         actions.add(btnCancel);
 
@@ -114,6 +115,9 @@ public class PlacementTestFormDialog extends JDialog {
         getContentPane().add(actions, BorderLayout.SOUTH);
     }
 
+    /**
+     * Xử lý sự kiện khi nhấn nút "Lưu".
+     */
     private void onSave() {
         try {
             Student selectedStudent = (Student) cboStudent.getSelectedItem();

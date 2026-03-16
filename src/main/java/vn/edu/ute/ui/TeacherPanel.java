@@ -11,6 +11,9 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Lớp TeacherPanel tạo ra giao diện người dùng để quản lý thông tin giáo viên.
+ */
 public class TeacherPanel extends JPanel {
     private final TeacherService teacherService;
     private JTable teacherTable;
@@ -24,8 +27,11 @@ public class TeacherPanel extends JPanel {
         loadTeacherData();
     }
 
+    /**
+     * Khởi tạo các thành phần giao diện người dùng.
+     */
     private void initializeUI() {
-        // ===== Toolbar =====
+        // ===== Thanh công cụ =====
         JPanel toolbar = UITheme.createToolbar();
         JButton addButton = UITheme.createSuccessButton("Thêm", "➕");
         JButton editButton = UITheme.createPrimaryButton("Sửa", "✏️");
@@ -37,13 +43,13 @@ public class TeacherPanel extends JPanel {
         toolbar.add(refreshButton);
         add(toolbar, BorderLayout.NORTH);
 
-        // ===== Table =====
+        // ===== Bảng hiển thị giáo viên =====
         String[] columnNames = { "ID", "Họ và Tên", "Chuyên môn", "Ngày thuê", "Điện thoại", "Email", "Trạng thái" };
         tableModel = new DefaultTableModel(columnNames, 0);
         teacherTable = new JTable(tableModel);
         add(UITheme.createStyledScrollPane(teacherTable), BorderLayout.CENTER);
 
-        // ===== Actions =====
+        // ===== Các hành động (Actions) =====
         addButton.addActionListener(e -> openTeacherDialog(null));
         editButton.addActionListener(e -> {
             int selectedRow = teacherTable.getSelectedRow();
@@ -73,6 +79,9 @@ public class TeacherPanel extends JPanel {
         refreshButton.addActionListener(e -> loadTeacherData());
     }
 
+    /**
+     * Tải dữ liệu giáo viên từ service và hiển thị lên bảng.
+     */
     private void loadTeacherData() {
         tableModel.setRowCount(0);
         List<Teacher> teacherList = teacherService.getAllTeachers();
@@ -89,6 +98,10 @@ public class TeacherPanel extends JPanel {
         }
     }
 
+    /**
+     * Mở hộp thoại để thêm hoặc chỉnh sửa thông tin giáo viên.
+     * @param teacher Giáo viên cần chỉnh sửa, hoặc null nếu là thêm mới.
+     */
     private void openTeacherDialog(Teacher teacher) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Thông tin Giáo viên", true);
         dialog.getContentPane().setLayout(new BorderLayout());

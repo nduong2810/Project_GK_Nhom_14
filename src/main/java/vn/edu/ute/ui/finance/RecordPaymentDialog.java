@@ -12,13 +12,15 @@ import java.text.NumberFormat;
 import java.util.Locale;
 
 /**
- * SRP: Dùng PaymentService thay vì FinanceService.
+ * Lớp `RecordPaymentDialog` tạo hộp thoại để ghi nhận một giao dịch thanh toán cho hóa đơn.
+ * SRP: Dialog này sử dụng `PaymentService` thay vì một `FinanceService` lớn.
  */
 public class RecordPaymentDialog extends JDialog {
 
     private final PaymentService paymentService;
     private final Invoice invoice;
 
+    // Các thành phần UI
     private final JLabel lblStudent = new JLabel();
     private final JLabel lblTotal = new JLabel();
     private final JLabel lblPaid = new JLabel();
@@ -41,6 +43,9 @@ public class RecordPaymentDialog extends JDialog {
         setLocationRelativeTo(owner);
     }
 
+    /**
+     * Xây dựng giao diện người dùng.
+     */
     private void buildUI() {
         UITheme.styleDialog(this);
 
@@ -52,91 +57,52 @@ public class RecordPaymentDialog extends JDialog {
         g.fill = GridBagConstraints.HORIZONTAL;
 
         int r = 0;
-        // Thông tin hóa đơn (chỉ đọc)
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Học viên:"), g);
-        g.gridx = 1;
-        lblStudent.setFont(UITheme.FONT_BODY_BOLD);
-        form.add(lblStudent, g);
+        // Hiển thị thông tin hóa đơn (chỉ đọc)
+        g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Học viên:"), g);
+        g.gridx = 1; lblStudent.setFont(UITheme.FONT_BODY_BOLD); form.add(lblStudent, g);
 
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Tổng hóa đơn:"), g);
-        g.gridx = 1;
-        form.add(lblTotal, g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Tổng hóa đơn:"), g);
+        g.gridx = 1; form.add(lblTotal, g);
 
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Đã thanh toán:"), g);
-        g.gridx = 1;
-        form.add(lblPaid, g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Đã thanh toán:"), g);
+        g.gridx = 1; form.add(lblPaid, g);
 
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Còn lại:"), g);
-        g.gridx = 1;
-        lblRemaining.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        lblRemaining.setForeground(UITheme.DANGER);
-        form.add(lblRemaining, g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Còn lại:"), g);
+        g.gridx = 1; lblRemaining.setFont(new Font("Segoe UI", Font.BOLD, 14)); lblRemaining.setForeground(UITheme.DANGER); form.add(lblRemaining, g);
 
-        // Separator
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        g.gridwidth = 2;
-        g.fill = GridBagConstraints.HORIZONTAL;
-        form.add(UITheme.createSeparator(), g);
+        // Đường kẻ phân cách
+        r++; g.gridx = 0; g.gridy = r; g.gridwidth = 2; form.add(UITheme.createSeparator(), g);
         g.gridwidth = 1;
-        g.fill = GridBagConstraints.HORIZONTAL;
 
-        // Input thanh toán
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Số tiền TT (*):"), g);
-        g.gridx = 1;
-        form.add(txtAmount, g);
+        // Các trường nhập liệu cho thanh toán mới
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Số tiền TT (*):"), g);
+        g.gridx = 1; form.add(txtAmount, g);
 
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Hình thức (*):"), g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Hình thức (*):"), g);
         g.gridx = 1;
-        cboMethod.setRenderer((list, value, index, isSelected, cellHasFocus) -> {
-            JLabel label = new JLabel();
-            label.setFont(UITheme.FONT_BODY);
-            label.setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
-            if (value != null) {
-                label.setText(switch (value) {
-                    case Cash -> "💵 Tiền mặt";
-                    case Bank -> "🏦 Chuyển khoản ngân hàng";
-                    case Momo -> "📱 Ví Momo";
-                    case ZaloPay -> "📱 ZaloPay";
-                    case Card -> "💳 Thẻ tín dụng/ghi nợ";
-                    case Other -> "📋 Khác";
-                });
+        cboMethod.setRenderer(new DefaultListCellRenderer() { // Tùy chỉnh hiển thị cho ComboBox
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof Payment.PaymentMethod pm) {
+                    setText(switch (pm) {
+                        case Cash -> "💵 Tiền mặt";
+                        case Bank -> "🏦 Chuyển khoản ngân hàng";
+                        case Momo -> "📱 Ví Momo";
+                        case ZaloPay -> "📱 ZaloPay";
+                        case Card -> "💳 Thẻ tín dụng/ghi nợ";
+                        case Other -> "📋 Khác";
+                    });
+                }
+                return this;
             }
-            if (isSelected) {
-                label.setBackground(list.getSelectionBackground());
-                label.setForeground(list.getSelectionForeground());
-                label.setOpaque(true);
-            }
-            return label;
         });
         form.add(cboMethod, g);
 
-        r++;
-        g.gridx = 0;
-        g.gridy = r;
-        form.add(UITheme.createFormLabel("Mã tham chiếu:"), g);
-        g.gridx = 1;
-        form.add(txtRefCode, g);
+        r++; g.gridx = 0; g.gridy = r; form.add(UITheme.createFormLabel("Mã tham chiếu:"), g);
+        g.gridx = 1; form.add(txtRefCode, g);
 
-        // Nút bấm
+        // Các nút hành động
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actions.setOpaque(false);
         actions.setBorder(BorderFactory.createEmptyBorder(12, 0, 0, 0));
@@ -151,6 +117,9 @@ public class RecordPaymentDialog extends JDialog {
         getContentPane().add(actions, BorderLayout.SOUTH);
     }
 
+    /**
+     * Tải và hiển thị thông tin của hóa đơn.
+     */
     private void loadInvoiceInfo() {
         lblStudent.setText(invoice.getStudent() != null ? invoice.getStudent().getFullName() : "N/A");
         lblTotal.setText(currencyFmt.format(invoice.getTotalAmount()));
@@ -159,6 +128,7 @@ public class RecordPaymentDialog extends JDialog {
             lblPaid.setText(currencyFmt.format(totalPaid));
             BigDecimal remaining = invoice.getTotalAmount().subtract(totalPaid);
             lblRemaining.setText(currencyFmt.format(remaining));
+            // Tự động điền số tiền còn lại vào ô thanh toán
             txtAmount.setText(remaining.toPlainString());
         } catch (Exception ex) {
             lblPaid.setText("Lỗi");
@@ -166,31 +136,31 @@ public class RecordPaymentDialog extends JDialog {
         }
     }
 
+    /**
+     * Xử lý sự kiện khi nhấn nút "Thanh Toán".
+     */
     private void onPay() {
         try {
+            // Kiểm tra và chuyển đổi số tiền nhập vào
             String amountStr = txtAmount.getText().trim();
-            if (amountStr.isEmpty())
-                throw new IllegalArgumentException("Vui lòng nhập số tiền thanh toán.");
+            if (amountStr.isEmpty()) throw new IllegalArgumentException("Vui lòng nhập số tiền thanh toán.");
             BigDecimal amount;
             try {
                 amount = new BigDecimal(amountStr);
-                if (amount.compareTo(BigDecimal.ZERO) <= 0)
-                    throw new NumberFormatException();
+                if (amount.compareTo(BigDecimal.ZERO) <= 0) throw new NumberFormatException();
             } catch (NumberFormatException ex) {
                 throw new IllegalArgumentException("Số tiền phải là số dương hợp lệ.");
             }
 
+            // Kiểm tra số tiền thanh toán không được vượt quá số tiền còn thiếu
             BigDecimal totalPaid = paymentService.getTotalPaidForInvoice(invoice.getInvoiceId());
             BigDecimal remaining = invoice.getTotalAmount().subtract(totalPaid);
-            if (remaining.compareTo(BigDecimal.ZERO) < 0)
-                remaining = BigDecimal.ZERO;
+            if (remaining.compareTo(BigDecimal.ZERO) < 0) remaining = BigDecimal.ZERO;
 
             if (amount.compareTo(remaining) > 0) {
                 JOptionPane.showMessageDialog(this,
                         "Số tiền thanh toán (" + currencyFmt.format(amount) + ") vượt quá số tiền còn thiếu ("
-                                + currencyFmt.format(remaining) + ").\n"
-                                + "Vui lòng thanh toán số tiền nhỏ hơn hoặc bằng " + currencyFmt.format(remaining)
-                                + ".",
+                                + currencyFmt.format(remaining) + ").",
                         "Số tiền không hợp lệ", JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -198,7 +168,8 @@ public class RecordPaymentDialog extends JDialog {
             Payment.PaymentMethod method = (Payment.PaymentMethod) cboMethod.getSelectedItem();
             String refCode = txtRefCode.getText().trim().isEmpty() ? null : txtRefCode.getText().trim();
 
-            paymentService.recordPayment(invoice.getInvoiceId(), null, amount, method, refCode);
+            // Gọi service để ghi nhận thanh toán
+            paymentService.recordPayment(invoice.getInvoiceId(), invoice.getEnrollment().getEnrollmentId(), amount, method, refCode);
             JOptionPane.showMessageDialog(this, "Thanh toán thành công!");
             saved = true;
             dispose();

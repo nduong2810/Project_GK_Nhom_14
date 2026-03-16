@@ -8,6 +8,9 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
+/**
+ * Lớp StaffPanel tạo ra giao diện người dùng để quản lý thông tin nhân viên.
+ */
 public class StaffPanel extends JPanel {
     private final StaffService staffService;
     private JTable staffTable;
@@ -21,8 +24,11 @@ public class StaffPanel extends JPanel {
         loadStaffData();
     }
 
+    /**
+     * Khởi tạo các thành phần giao diện người dùng.
+     */
     private void initializeUI() {
-        // ===== Toolbar =====
+        // ===== Thanh công cụ =====
         JPanel toolbar = UITheme.createToolbar();
         JButton addButton = UITheme.createSuccessButton("Thêm", "➕");
         JButton editButton = UITheme.createPrimaryButton("Sửa", "✏️");
@@ -34,13 +40,13 @@ public class StaffPanel extends JPanel {
         toolbar.add(refreshButton);
         add(toolbar, BorderLayout.NORTH);
 
-        // ===== Table =====
+        // ===== Bảng hiển thị nhân viên =====
         String[] columnNames = { "ID", "Họ và Tên", "Chức vụ", "Điện thoại", "Email", "Trạng thái" };
         tableModel = new DefaultTableModel(columnNames, 0);
         staffTable = new JTable(tableModel);
         add(UITheme.createStyledScrollPane(staffTable), BorderLayout.CENTER);
 
-        // ===== Actions =====
+        // ===== Các hành động (Actions) =====
         addButton.addActionListener(e -> openStaffDialog(null));
         editButton.addActionListener(e -> {
             int selectedRow = staffTable.getSelectedRow();
@@ -70,6 +76,9 @@ public class StaffPanel extends JPanel {
         refreshButton.addActionListener(e -> loadStaffData());
     }
 
+    /**
+     * Tải dữ liệu nhân viên từ service và hiển thị lên bảng.
+     */
     private void loadStaffData() {
         tableModel.setRowCount(0);
         List<Staff> staffList = staffService.getAllStaff();
@@ -85,12 +94,16 @@ public class StaffPanel extends JPanel {
         }
     }
 
+    /**
+     * Mở hộp thoại để thêm hoặc chỉnh sửa thông tin nhân viên.
+     * @param staff Nhân viên cần chỉnh sửa, hoặc null nếu là thêm mới.
+     */
     private void openStaffDialog(Staff staff) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Thông tin Nhân viên", true);
         dialog.getContentPane().setLayout(new BorderLayout());
         UITheme.styleDialog(dialog);
 
-        // Form panel
+        // Panel form nhập liệu
         JPanel form = new JPanel(new GridBagLayout());
         form.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
@@ -139,7 +152,7 @@ public class StaffPanel extends JPanel {
         gbc.gridx = 1;
         form.add(statusComboBox, gbc);
 
-        // Buttons
+        // Các nút hành động
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actions.setOpaque(false);
         actions.setBorder(BorderFactory.createEmptyBorder(12, 0, 0, 0));

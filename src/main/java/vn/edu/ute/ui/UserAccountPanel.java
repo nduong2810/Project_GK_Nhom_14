@@ -8,6 +8,9 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
+/**
+ * Lớp UserAccountPanel tạo ra giao diện người dùng để quản lý tài khoản người dùng.
+ */
 public class UserAccountPanel extends JPanel {
     private final UserAccountService userAccountService;
     private JTable userAccountTable;
@@ -21,8 +24,11 @@ public class UserAccountPanel extends JPanel {
         loadUserAccountData();
     }
 
+    /**
+     * Khởi tạo các thành phần giao diện người dùng.
+     */
     private void initializeUI() {
-        // ===== Toolbar =====
+        // ===== Thanh công cụ =====
         JPanel toolbar = UITheme.createToolbar();
         JButton addButton = UITheme.createSuccessButton("Thêm", "➕");
         JButton editButton = UITheme.createPrimaryButton("Sửa", "✏️");
@@ -34,13 +40,13 @@ public class UserAccountPanel extends JPanel {
         toolbar.add(refreshButton);
         add(toolbar, BorderLayout.NORTH);
 
-        // ===== Table =====
+        // ===== Bảng hiển thị tài khoản =====
         String[] columnNames = { "ID", "Username", "Vai trò", "Trạng thái" };
         tableModel = new DefaultTableModel(columnNames, 0);
         userAccountTable = new JTable(tableModel);
         add(UITheme.createStyledScrollPane(userAccountTable), BorderLayout.CENTER);
 
-        // ===== Actions =====
+        // ===== Các hành động (Actions) =====
         addButton.addActionListener(e -> openUserAccountDialog(null));
         editButton.addActionListener(e -> {
             int selectedRow = userAccountTable.getSelectedRow();
@@ -70,6 +76,9 @@ public class UserAccountPanel extends JPanel {
         refreshButton.addActionListener(e -> loadUserAccountData());
     }
 
+    /**
+     * Tải dữ liệu tài khoản từ service và hiển thị lên bảng.
+     */
     private void loadUserAccountData() {
         tableModel.setRowCount(0);
         List<UserAccount> userAccountList = userAccountService.getAllUserAccounts();
@@ -83,6 +92,10 @@ public class UserAccountPanel extends JPanel {
         }
     }
 
+    /**
+     * Mở hộp thoại để thêm hoặc chỉnh sửa thông tin tài khoản.
+     * @param userAccount Tài khoản cần chỉnh sửa, hoặc null nếu là thêm mới.
+     */
     private void openUserAccountDialog(UserAccount userAccount) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Thông tin Tài khoản", true);
         dialog.getContentPane().setLayout(new BorderLayout());
@@ -142,12 +155,15 @@ public class UserAccountPanel extends JPanel {
 
             String password = new String(passwordField.getPassword());
             if (!password.isEmpty()) {
+                // Lưu ý: Trong thực tế, mật khẩu nên được băm (hash) trước khi lưu.
                 newUserAccount.setPasswordHash(password);
             }
 
             newUserAccount.setRole((UserAccount.Role) roleComboBox.getSelectedItem());
             newUserAccount.setIsActive(activeCheckBox.isSelected());
 
+            // TODO: Cần có cơ chế để liên kết tài khoản với Staff, Teacher, hoặc Student tương ứng.
+            // Hiện tại đang để null.
             newUserAccount.setStaff(null);
             newUserAccount.setTeacher(null);
             newUserAccount.setStudent(null);
