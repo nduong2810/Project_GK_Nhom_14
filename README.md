@@ -1,7 +1,7 @@
 
 # Project_GK_Nhom_14
 # Hệ Thống Quản Lý Trung Tâm Ngoại Ngữ
-Nhóm sinh viên thực hiện:
+Nhóm sinh viên thực hiện (Nhóm 14):
 
 Bùi Phúc Nhân - 23110278
 
